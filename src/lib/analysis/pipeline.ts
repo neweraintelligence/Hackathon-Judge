@@ -5,6 +5,7 @@ import { runPass3 } from './passes/pass3'
 import { runPass4 } from './passes/pass4'
 import { runPass5 } from './passes/pass5'
 import { runPass6 } from './passes/pass6'
+import { ensureAIJudge, submitAIJudgeScores } from '@/lib/ai-judge/submit-scores'
 import type { PassName, CriterionConfig, Pass1Result, Pass2Result, Pass3Result } from '@/types'
 
 async function savePassResult(
@@ -157,6 +158,28 @@ export async function runFullPipeline(
 
     // Save ai_scores from pass6
     await saveAIScores(submissionId, pass6)
+
+    // Auto-submit AI judge scores if enabled for this event
+    const { data: eventRow } = await supabase
+      .from('events')
+      .select('ai_judge_enabled, ai_judge_name, criteria_config')
+      .eq('id', eventId)
+      .single()
+
+    if (eventRow?.ai_judge_enabled) {
+      try {
+        const aiJudgeId = await ensureAIJudge(eventId, eventRow.ai_judge_name || 'Aria')
+        await submitAIJudgeScores(
+          submissionId,
+          aiJudgeId,
+          pass6,
+          eventRow.criteria_config || criteria
+        )
+      } catch (err) {
+        console.error('AI judge score submission failed:', err)
+        // Non-fatal — don't block the rest of the pipeline
+      }
+    }
 
     // Save pool score
     await savePoolScore(

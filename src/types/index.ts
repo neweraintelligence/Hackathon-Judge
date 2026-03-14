@@ -17,6 +17,8 @@ export interface Event {
   date: string
   criteria_config: CriterionConfig[]
   judging_mode: JudgingMode
+  ai_judge_enabled: boolean
+  ai_judge_name: string
   created_at: string
 }
 
@@ -53,6 +55,7 @@ export interface Judge {
   invite_token: string
   user_id: string | null
   joined_at: string | null
+  is_ai_judge: boolean
 }
 
 // ─── AI Analysis ──────────────────────────────────────────────────────────────
@@ -198,11 +201,16 @@ export interface PoolScore {
 
 // ─── Composite view types ─────────────────────────────────────────────────────
 
+export interface JudgeScoreWithJudge extends JudgeScore {
+  judges: Pick<Judge, 'id' | 'display_name' | 'is_ai_judge'>
+}
+
 export interface SubmissionWithAnalysis extends Submission {
   ai_analyses: AIAnalysis[]
   ai_scores: AIScore[]
   pool_scores: PoolScore[]
   submission_media: SubmissionMedia[]
+  judge_scores: JudgeScoreWithJudge[]
 }
 
 export interface LeaderboardEntry {

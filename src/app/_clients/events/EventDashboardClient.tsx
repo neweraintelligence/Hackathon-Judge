@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/Badge'
 import { PillTabs } from '@/components/ui/PillTabs'
 import { AddSubmissionModal } from '@/app/_clients/submissions/AddSubmissionModal'
 import { InviteJudgeModal } from './InviteJudgeModal'
+import { AIJudgeToggle } from './AIJudgeToggle'
+import { AIJudgeAvatar } from '@/components/ui/AIJudgeAvatar'
 
 const STATUS_BADGE: Record<string, { label: string; variant: any }> = {
   pending: { label: 'Pending', variant: 'default' },
@@ -106,17 +108,33 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
         {/* Judges Tab */}
         {tab === 'judges' && (
           <div className="space-y-3">
-            <div className="flex justify-end">
+            {/* AI Judge toggle — always at top */}
+            <AIJudgeToggle
+              eventId={event.id}
+              eventSlug={event.slug}
+              enabled={event.ai_judge_enabled ?? false}
+              judgeCount={judges.filter((j) => !j.is_ai_judge).length}
+              name={event.ai_judge_name || 'Aria'}
+            />
+
+            <div className="flex items-center justify-between pt-1">
+              <div className="label">Human Judges</div>
               <Button size="sm" onClick={() => setShowInviteJudge(true)}>+ Invite Judge</Button>
             </div>
-            {judges.length === 0 ? (
-              <div className="card text-center py-12 text-gray-500">No judges invited yet</div>
+
+            {judges.filter((j) => !j.is_ai_judge).length === 0 ? (
+              <div className="card text-center py-8 text-gray-500 text-sm">No human judges invited yet</div>
             ) : (
-              judges.map((j) => (
+              judges.filter((j) => !j.is_ai_judge).map((j) => (
                 <div key={j.id} className="card flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-white">{j.display_name || j.email}</div>
-                    <div className="text-xs text-gray-500">{j.email}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-sm font-bold text-gray-400">
+                      {(j.display_name || j.email)[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium text-white">{j.display_name || j.email}</div>
+                      <div className="text-xs text-gray-500">{j.email}</div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {j.joined_at ? (

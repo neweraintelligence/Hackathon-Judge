@@ -3,6 +3,7 @@ import type { SubmissionWithAnalysis, Pass6Result, Pass1Result } from '@/types'
 import { Badge } from '@/components/ui/Badge'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { CriteriaBreakdown } from '@/components/ui/CriteriaBreakdown'
+import { AIJudgePanelCard } from './AIJudgePanelCard'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
 interface Props {
@@ -13,6 +14,11 @@ export function AIReportPanel({ submission }: Props) {
   const pass6 = submission.ai_analyses.find((a) => a.pass_name === 'pass6_synthesis')?.result as Pass6Result | null
   const pass1 = submission.ai_analyses.find((a) => a.pass_name === 'pass1_repo_archaeology')?.result as Pass1Result | null
   const poolScore = submission.pool_scores?.[0]
+
+  // Find AI judge scores (judge_scores rows from the AI judge)
+  // We detect them via the comment style — or ideally pass judge info down
+  // For now surface them from ai_scores as the canonical source
+  const aiJudgeScores = (submission as any).ai_judge_scores as Array<{ criteria_key: string; score: number; comment: string }> | undefined
 
   if (!pass6) {
     return (

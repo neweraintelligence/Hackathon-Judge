@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 import { CriteriaBreakdown } from '@/components/ui/CriteriaBreakdown'
 import { AnalysisPipelineProgress } from './AnalysisPipelineProgress'
+import { AIJudgePanelCard } from '@/app/_clients/judge/AIJudgePanelCard'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
 interface Props {
@@ -20,6 +21,10 @@ export function SubmissionReportClient({ submission }: Props) {
   const techStack = pass1?.tech_stack || []
   const isReady = submission.status === 'ready'
   const isAnalyzing = submission.status === 'analyzing'
+
+  // Separate AI judge scores from human judge scores
+  const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
+  const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Aria' : 'Aria'
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -126,6 +131,15 @@ export function SubmissionReportClient({ submission }: Props) {
                   ))}
                 </div>
               </Card>
+            )}
+
+            {/* AI Judge Panel Card */}
+            {aiJudgeScores.length > 0 && (
+              <AIJudgePanelCard
+                name={aiJudgeName}
+                scores={aiJudgeScores}
+                criteria={DEFAULT_CRITERIA}
+              />
             )}
           </>
         )}

@@ -56,7 +56,11 @@ export async function getSubmissionWithAnalysis(
       ai_analyses(*),
       ai_scores(*),
       pool_scores(*),
-      submission_media(*)
+      submission_media(*),
+      judge_scores(
+        *,
+        judges(id, display_name, is_ai_judge)
+      )
     `)
     .eq('id', submissionId)
     .single()
