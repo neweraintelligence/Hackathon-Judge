@@ -14,7 +14,7 @@ export function CriteriaBreakdown({ scores, criteria }: CriteriaBreakdownProps) 
         const score = scores.find((s) => s.criteria_key === criterion.key)
         if (!score) return null
         return (
-          <div key={criterion.key} className="glass rounded-xl p-4 border border-white/[0.06]">
+          <div key={criterion.key} className="card">
             <div className="flex items-start gap-4">
               <ProgressRing score={score.score} size={52} strokeWidth={4} />
               <div className="flex-1 min-w-0">

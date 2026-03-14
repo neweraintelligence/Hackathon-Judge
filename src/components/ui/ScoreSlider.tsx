@@ -11,13 +11,13 @@ interface ScoreSliderProps {
 export function ScoreSlider({ label, value, onChange, min = 0, max = 10 }: ScoreSliderProps) {
   const percent = ((value - min) / (max - min)) * 100
   const color =
-    percent >= 70 ? '#22c55e' : percent >= 40 ? '#eab308' : '#ef4444'
+    percent >= 70 ? '#16c784' : percent >= 40 ? '#f6be4f' : '#ef5f79'
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-300">{label}</span>
-        <span className="text-lg font-bold" style={{ color }}>
+        <span className="text-sm text-gray-200">{label}</span>
+        <span className="text-xl font-semibold tracking-tight" style={{ color }}>
           {value.toFixed(1)}
         </span>
       </div>
@@ -28,11 +28,15 @@ export function ScoreSlider({ label, value, onChange, min = 0, max = 10 }: Score
         step={0.5}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+        className="slider w-full cursor-pointer"
         style={{
-          background: `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, rgba(255,255,255,0.1) ${percent}%, rgba(255,255,255,0.1) 100%)`,
+          background: `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, rgba(148, 163, 184, 0.18) ${percent}%, rgba(148, 163, 184, 0.18) 100%)`,
         }}
       />
+      <div className="flex justify-between text-[10px] text-gray-500 uppercase tracking-[0.18em]">
+        <span>{min}</span>
+        <span>{max}</span>
+      </div>
     </div>
   )
 }

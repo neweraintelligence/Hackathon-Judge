@@ -21,25 +21,28 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
   ]
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/events/${event.slug}/judge`}
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
-          >
-            ← Queue
-          </Link>
-          <div className="h-4 w-px bg-white/10" />
-          <span className="font-medium text-white">{submission.team_name}</span>
+    <div className="relative flex flex-col h-screen">
+      <div className="shrink-0 border-b border-white/10 bg-[#0f1012]/92 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 text-sm">
+              <Link
+                href={`/events/${event.slug}/judge`}
+                className="text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                Back to Queue
+              </Link>
+              <div className="h-4 w-px bg-white/15" />
+              <span className="text-gray-500">{event.name}</span>
+            </div>
+            <div className="mt-1.5 font-semibold text-white tracking-tight truncate">{submission.team_name}</div>
+          </div>
+          <PillTabs tabs={tabs} activeTab={panel} onTabChange={(k) => setPanel(k as any)} />
         </div>
-        <PillTabs tabs={tabs} activeTab={panel} onTabChange={(k) => setPanel(k as any)} />
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="max-w-3xl mx-auto px-6 py-8 h-full overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-6 py-8 h-full overflow-y-auto">
           {panel === 'ai' && <AIReportPanel submission={submission} />}
           {panel === 'rubric' && (
             <RubricPanel event={event} submission={submission} judgeId={judgeId} />

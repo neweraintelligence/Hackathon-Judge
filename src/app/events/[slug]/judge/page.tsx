@@ -12,12 +12,12 @@ export default async function JudgeQueuePage({ params }: { params: { slug: strin
   const readySubmissions = submissions.filter((s) => s.status === 'ready')
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="mb-8">
+    <div className="min-h-screen">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="mb-10 fade-up">
           <div className="label mb-1">Judge Queue</div>
-          <h1 className="text-2xl font-bold text-white">{event.name}</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="text-3xl font-bold text-white tracking-tight">{event.name}</h1>
+          <p className="text-gray-400 text-sm mt-2">
             {readySubmissions.length} submission{readySubmissions.length !== 1 ? 's' : ''} ready to judge
           </p>
         </div>

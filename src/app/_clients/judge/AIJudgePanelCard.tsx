@@ -22,9 +22,8 @@ export function AIJudgePanelCard({ name, scores, criteria, expanded = false }: P
     }, 0)
 
   return (
-    <div className="glass rounded-2xl border border-purple-500/20 shadow-glow overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-purple-500/10 bg-purple-600/5">
+    <div className="card overflow-hidden border-indigo-300/20">
+      <div className="flex items-center gap-3 px-1 pb-4 border-b border-white/10">
         <AIJudgeAvatar size={44} pulse />
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -39,8 +38,7 @@ export function AIJudgePanelCard({ name, scores, criteria, expanded = false }: P
         </div>
       </div>
 
-      {/* Scores */}
-      <div className="divide-y divide-white/[0.04]">
+      <div className="divide-y divide-white/[0.06]">
         {criteria.map((criterion) => {
           const judgeScore = scores.find((s) => s.criteria_key === criterion.key)
           if (!judgeScore) return null
@@ -53,13 +51,13 @@ export function AIJudgePanelCard({ name, scores, criteria, expanded = false }: P
               : 'text-red-400'
 
           return (
-            <div key={criterion.key} className="px-5 py-3">
+            <div key={criterion.key} className="py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-gray-300 mb-1">{criterion.label}</div>
                   {judgeScore.comment && (
-                    <p className="text-xs text-gray-500 leading-relaxed italic">
-                      "{judgeScore.comment}"
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      {judgeScore.comment}
                     </p>
                   )}
                 </div>

@@ -17,7 +17,7 @@ export default async function JudgeScoringPage({
   if (!event || !submission) notFound()
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen">
       <JudgeScoringClient event={event} submission={submission} />
     </div>
   )

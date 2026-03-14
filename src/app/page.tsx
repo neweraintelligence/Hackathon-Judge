@@ -2,79 +2,105 @@ import Link from 'next/link'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-5 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-white tracking-tight">
-            cursor<span className="text-purple-500">judging</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/events" className="btn-secondary text-sm">
-            Events
-          </Link>
+    <div className="min-h-screen">
+      <nav className="relative z-10 border-b border-white/10">
+        <div className="mx-auto max-w-6xl flex items-center justify-between px-6 py-5">
+          <div className="text-lg font-semibold tracking-tight text-white">
+            cursor<span className="text-blue-300">judging</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/events" className="btn-ghost text-sm">
+              Events
+            </Link>
+            <Link href="/events/new" className="btn-secondary text-sm">
+              New Event
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-72px)] px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-600/10 border border-purple-500/20 text-purple-400 text-xs font-medium mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-          AI-Powered Hackathon Analysis
-        </div>
+      <main className="relative z-10 mx-auto max-w-6xl px-6 pt-20 pb-24">
+        <section className="grid grid-cols-1 lg:grid-cols-[1.25fr_0.75fr] gap-12 items-start">
+          <div className="space-y-8 fade-up">
+            <div className="inline-flex items-center rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11px] font-medium tracking-[0.08em] text-gray-300">
+              AI-assisted Hackathon Judging
+            </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
-          Judge faster.<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
-            Judge better.
-          </span>
-        </h1>
+            <div className="space-y-5 max-w-2xl">
+              <h1 className="text-5xl md:text-6xl font-semibold tracking-tight leading-[1.04] text-white">
+                Structured judging for serious technical competitions.
+              </h1>
+              <p className="text-lg text-gray-300 leading-relaxed max-w-xl">
+                Replace subjective score inflation with multi-pass analysis, normalized ranking, and a purpose-built judge workflow.
+              </p>
+            </div>
 
-        <p className="text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
-          Multi-pass AI analysis with extended thinking. Pool-relative scoring.
-          Collaborative judge interface. Built to eliminate grade inflation and surface
-          genuine engineering creativity.
-        </p>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link href="/events/new" className="btn-primary text-sm px-6 py-3">
+                Create Event
+              </Link>
+              <Link href="/events" className="btn-secondary text-sm px-6 py-3">
+                View Events
+              </Link>
+            </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link href="/events/new" className="btn-primary text-base px-8 py-3 rounded-xl shadow-glow">
-            Create Event
-          </Link>
-          <Link href="/events" className="btn-secondary text-base px-8 py-3 rounded-xl">
-            View Events
-          </Link>
-        </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+              {[
+                ['6', 'analysis passes'],
+                ['pool-relative', 'ranking model'],
+                ['multi-judge', 'live score sync'],
+              ].map(([value, label]) => (
+                <div key={label} className="card py-4">
+                  <div className="text-white text-lg font-semibold tracking-tight">{value}</div>
+                  <div className="text-[12px] uppercase tracking-[0.14em] text-gray-500 mt-1">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Feature grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-20 max-w-3xl w-full">
+          <aside className="card fade-up">
+            <div className="label mb-2">Judge Workflow</div>
+            <h2 className="text-white text-xl font-semibold tracking-tight mb-6">Built for confidence, not speed alone.</h2>
+            <div className="space-y-4">
+              {[
+                ['01', 'Ingest', 'GitHub + Devpost context is parsed into a consistent submission record.'],
+                ['02', 'Analyze', 'Six evaluation passes generate technical, UX, and innovation evidence.'],
+                ['03', 'Score', 'Judges apply rubric scores with comments and transparent weighting.'],
+                ['04', 'Rank', 'Leaderboard reflects normalized results across the full submission pool.'],
+              ].map(([index, title, desc]) => (
+                <div key={index} className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 hover:bg-white/[0.04] transition-colors">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] tracking-[0.2em] text-blue-200">{index}</span>
+                    <span className="text-sm font-medium text-white">{title}</span>
+                  </div>
+                  <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </section>
+
+        <section className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 fade-up">
           {[
             {
-              icon: '🔬',
-              title: '6-Pass Analysis',
-              desc: 'Repo archaeology → Code deep dive → Innovation audit → Visual analysis → Pool comparison → Synthesis',
+              title: 'Signal over noise',
+              desc: 'Scoring is tied to evidence from repository history, architecture, and product execution.',
             },
             {
-              icon: '⚖️',
-              title: 'Pool-Relative Scoring',
-              desc: 'Scores are normalized against the full submission pool. No more grade inflation or isolated 8/10s.',
+              title: 'Consistent panel behavior',
+              desc: 'Each judge follows the same scoring flow with clear criteria and comment prompts.',
             },
             {
-              icon: '🤝',
-              title: 'Multi-Judge Interface',
-              desc: 'Magic link invites, rubric sliders, pairwise comparison mode, live leaderboard via Realtime.',
+              title: 'Live operational view',
+              desc: 'Track analysis progress, judge participation, and ranking outcomes in one place.',
             },
-          ].map((f) => (
-            <div key={f.title} className="card text-left">
-              <div className="text-2xl mb-3">{f.icon}</div>
-              <div className="font-semibold text-white mb-1 text-sm">{f.title}</div>
-              <div className="text-gray-500 text-xs leading-relaxed">{f.desc}</div>
-            </div>
+          ].map((item) => (
+            <article key={item.title} className="card interactive-card">
+              <h3 className="text-white font-semibold tracking-tight">{item.title}</h3>
+              <p className="text-sm text-gray-400 mt-2 leading-relaxed">{item.desc}</p>
+            </article>
           ))}
-        </div>
+        </section>
       </main>
     </div>
   )
