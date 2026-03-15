@@ -166,17 +166,22 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
 
       // 8. Track connection state
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState === 'connected') {
+        const s = pc.connectionState
+        if (s === 'connected') {
           setState('connected')
-          // Auto-speak the summary once connected
           speak(buildSummaryScript(submission))
-        } else if (
-          pc.connectionState === 'failed' ||
-          pc.connectionState === 'disconnected'
-        ) {
+        } else if (s === 'failed') {
           setState('error')
-          setErrorMsg('Connection lost. Please try again.')
+          setErrorMsg('WebRTC connection failed. Check your network or try again.')
+        } else if (s === 'disconnected') {
+          setState('error')
+          setErrorMsg('Stream disconnected. Please try again.')
         }
+      }
+
+      // Surface ICE failures separately so we know if TURN is the issue
+      pc.onicecandidateerror = (e) => {
+        console.warn('[Aria] ICE candidate error', e)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
