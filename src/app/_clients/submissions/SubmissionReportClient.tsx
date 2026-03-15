@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { SubmissionWithAnalysis, Pass1Result, Pass6Result } from '@/types'
 import { Badge } from '@/components/ui/Badge'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function SubmissionReportClient({ submission }: Props) {
+  const router = useRouter()
   const pass1 = submission.ai_analyses.find((a) => a.pass_name === 'pass1_repo_archaeology')?.result as Pass1Result | null
   const pass6 = submission.ai_analyses.find((a) => a.pass_name === 'pass6_synthesis')?.result as Pass6Result | null
   const poolScore = submission.pool_scores?.[0]
@@ -57,6 +59,14 @@ export function SubmissionReportClient({ submission }: Props) {
       )}
     <div className="min-h-screen bg-[#0a0a0f]">
       <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-gray-500 hover:text-white text-sm mb-6 transition-colors"
+        >
+          ← Back
+        </button>
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
