@@ -76,7 +76,7 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
-                  Hear from {event.ai_judge_name || 'Aria'}
+                  Hear from Avatar Judge
                 </button>
               )}
               <PillTabs tabs={tabs} activeTab={panel} onTabChange={(k) => setPanel(k as any)} />

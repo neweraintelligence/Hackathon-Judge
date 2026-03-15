@@ -146,13 +146,6 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
             className="w-full h-full rounded-2xl object-contain shadow-2xl bg-[#0a0b0d]"
           />
 
-          {/* Caption */}
-          {caption && state === 'speaking' && (
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent rounded-b-2xl">
-              <p className="text-white text-sm leading-relaxed text-center max-w-2xl mx-auto">{caption}</p>
-            </div>
-          )}
-
           {/* Connecting overlay */}
           {state === 'connecting' && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl">
@@ -173,6 +166,13 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
             </div>
           )}
         </div>
+
+        {/* Caption — below video */}
+        {caption && state === 'speaking' && (
+          <div className="w-full max-w-sm px-4 py-3">
+            <p className="text-white text-sm leading-relaxed text-center">{caption}</p>
+          </div>
+        )}
 
         <div className="text-center">
           <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>

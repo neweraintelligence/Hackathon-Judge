@@ -283,26 +283,6 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
             `}
           />
 
-          {/* Caption overlay — split into sentences, shown progressively */}
-          {caption && state === 'speaking' && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent rounded-b-2xl px-8 py-6">
-              <div className="max-w-2xl mx-auto space-y-1">
-                {caption.split(/(?<=[.!?])\s{2}/).map((sentence, i, arr) => (
-                  <p
-                    key={i}
-                    className={`text-center leading-snug transition-all duration-300 ${
-                      i === arr.length - 1
-                        ? 'text-white text-sm font-medium'
-                        : 'text-gray-400 text-xs'
-                    }`}
-                  >
-                    {sentence.trim()}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Connecting overlay */}
           {state === 'connecting' && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl">
@@ -326,6 +306,26 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
             </div>
           )}
         </div>
+
+        {/* Caption — below video */}
+        {caption && state === 'speaking' && (
+          <div className="w-full max-w-3xl px-4 py-3">
+            <div className="max-w-2xl mx-auto space-y-1">
+              {caption.split(/(?<=[.!?])\s{2}/).map((sentence, i, arr) => (
+                <p
+                  key={i}
+                  className={`text-center leading-snug transition-all duration-300 ${
+                    i === arr.length - 1
+                      ? 'text-white text-sm font-medium'
+                      : 'text-gray-400 text-xs'
+                  }`}
+                >
+                  {sentence.trim()}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Name row */}
         <div className="text-center">
