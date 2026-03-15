@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 export async function enableAIJudge(
   eventId: string,
   eventSlug: string,
-  name: string = 'Aria'
+  name: string = 'Avatar Judge'
 ): Promise<{ judgeId?: string; error?: string }> {
   try {
     const supabase = createServiceClient()

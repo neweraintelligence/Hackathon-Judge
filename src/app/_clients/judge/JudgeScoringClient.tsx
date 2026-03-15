@@ -40,14 +40,14 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
       {avatarProvider === 'did' && (
         <AriaStreamingAvatar
           submission={submission}
-          judgeName={event.ai_judge_name || 'Aria'}
+          judgeName={event.ai_judge_name || 'Avatar Judge'}
           onClose={() => setAvatarProvider(null)}
         />
       )}
       {avatarProvider === 'heygen' && (
         <HeyGenAriaAvatar
           submission={submission}
-          judgeName={event.ai_judge_name || 'Aria'}
+          judgeName={event.ai_judge_name || 'Avatar Judge'}
           onClose={() => setAvatarProvider(null)}
         />
       )}

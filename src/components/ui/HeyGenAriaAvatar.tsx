@@ -21,7 +21,7 @@ interface Props {
   onClose: () => void
 }
 
-export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Props) {
+export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState('')
   const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
@@ -30,23 +30,20 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
   const videoRef = useRef<HTMLVideoElement>(null)
   const avatarRef = useRef<StreamingAvatar | null>(null)
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pendingWordsRef = useRef<{ words: string[]; msPerWord: number } | null>(null)
 
   // ── Speak ──────────────────────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
     if (!avatarRef.current || state === 'connecting') return
     setState('speaking')
     setCaption(text)
-    setActiveWordIdx(0)
+    setActiveWordIdx(-1)
     if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     const words = text.trim().split(/\s+/)
     const ms = Math.max(4000, text.length * 55)
     const msPerWord = ms / words.length
-    wordTimerRef.current = setInterval(() => {
-      setActiveWordIdx((i) => {
-        if (i >= words.length - 1) { clearInterval(wordTimerRef.current!); return i }
-        return i + 1
-      })
-    }, msPerWord)
+    // Store for AVATAR_START_TALKING to kick off
+    pendingWordsRef.current = { words, msPerWord }
     try {
       await avatarRef.current.speak({ text, task_type: TaskType.REPEAT })
     } catch (err) {
@@ -54,6 +51,7 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
       setState('connected')
       setCaption('')
       setActiveWordIdx(-1)
+      pendingWordsRef.current = null
       if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     }
   }, [state])
@@ -84,6 +82,19 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
         setState('speaking')
+        // Start word highlight timer now that audio is actually playing
+        if (pendingWordsRef.current) {
+          const { words, msPerWord } = pendingWordsRef.current
+          pendingWordsRef.current = null
+          if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+          setActiveWordIdx(0)
+          wordTimerRef.current = setInterval(() => {
+            setActiveWordIdx((i) => {
+              if (i >= words.length - 1) { clearInterval(wordTimerRef.current!); return i }
+              return i + 1
+            })
+          }, msPerWord)
+        }
       })
 
       avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => {

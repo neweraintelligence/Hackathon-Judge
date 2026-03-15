@@ -180,7 +180,7 @@ export async function runFullPipeline(
 
     if (eventRow?.ai_judge_enabled) {
       try {
-        const aiJudgeId = await ensureAIJudge(eventId, eventRow.ai_judge_name || 'Aria')
+        const aiJudgeId = await ensureAIJudge(eventId, eventRow.ai_judge_name || 'Avatar Judge')
         await submitAIJudgeScores(
           submissionId,
           aiJudgeId,

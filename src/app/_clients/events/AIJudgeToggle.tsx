@@ -55,7 +55,7 @@ export function AIJudgeToggle({ eventId, eventSlug, enabled, judgeCount, name }:
           </div>
           <div className="text-xs text-gray-500">
             {enabled
-              ? `Voting alongside ${judgeCount} human judge${judgeCount !== 1 ? 's' : ''}. Aria's scores are weighted equally in the panel average.`
+              ? `Voting alongside ${judgeCount} human judge${judgeCount !== 1 ? 's' : ''}. Avatar Judge's scores are weighted equally in the panel average.`
               : 'Add an AI judge to the panel who votes alongside your human judges.'}
           </div>
         </div>
@@ -103,7 +103,7 @@ export function AIJudgeToggle({ eventId, eventSlug, enabled, judgeCount, name }:
                   className="input text-sm"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Aria"
+                  placeholder="Avatar Judge"
                 />
               </div>
             </div>
@@ -112,7 +112,7 @@ export function AIJudgeToggle({ eventId, eventSlug, enabled, judgeCount, name }:
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: '🧠', label: 'Extended Thinking', desc: 'Uses claude-opus-4-6 with 16k thinking budget' },
-              { icon: '🎙️', label: 'First-Person Voice', desc: 'Comments rewritten in Aria\'s own voice per submission' },
+              { icon: '🎙️', label: 'First-Person Voice', desc: 'Comments rewritten in Avatar Judge\'s own voice per submission' },
               { icon: '⚖️', label: 'Equal Vote', desc: 'Scores count in the panel average, same weight as humans' },
             ].map((f) => (
               <div key={f.label} className="bg-white/[0.02] rounded-lg p-3">

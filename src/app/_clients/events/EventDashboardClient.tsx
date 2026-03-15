@@ -161,7 +161,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
               eventSlug={event.slug}
               enabled={event.ai_judge_enabled ?? false}
               judgeCount={judges.filter((j) => !j.is_ai_judge).length}
-              name={event.ai_judge_name || 'Aria'}
+              name={event.ai_judge_name || 'Avatar Judge'}
             />
 
             <div className="flex items-center justify-between pt-1">

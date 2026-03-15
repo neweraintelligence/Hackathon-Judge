@@ -30,10 +30,10 @@ export function SubmissionReportClient({ submission }: Props) {
 
   // Separate AI judge scores from human judge scores
   const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
-  const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Aria' : 'Aria'
+  const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Avatar Judge' : 'Avatar Judge'
   const [showPicker, setShowPicker] = useState(false)
   const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
-  const canHearAria = aiJudgeScores.length > 0 && isReady
+  const canHearAvatarJudge = aiJudgeScores.length > 0 && isReady
 
   return (
     <>
@@ -71,7 +71,7 @@ export function SubmissionReportClient({ submission }: Props) {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="label">Submission Report</div>
-            {canHearAria && (
+            {canHearAvatarJudge && (
               <button
                 onClick={() => setShowPicker(true)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"

@@ -15,7 +15,7 @@ interface Props {
 
 export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
   const [heygenPreview, setHeygenPreview] = useState<string | null>(null)
-  const [heygenName, setHeygenName] = useState('Stephanie')
+  const [heygenName, setHeygenName] = useState('Alessandra')
   const [hovered, setHovered] = useState<AvatarProvider | null>(null)
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
           <div className="text-xs font-medium text-purple-300 tracking-widest uppercase mb-2">
             Choose Avatar Engine
           </div>
-          <p className="text-gray-500 text-sm">Two live rendering engines, same Aria intelligence</p>
+          <p className="text-gray-500 text-sm">Two live rendering engines, same Avatar Judge intelligence</p>
         </div>
 
         {/* Cards */}

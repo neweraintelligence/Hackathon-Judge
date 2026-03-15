@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { SubmissionWithAnalysis, Pass6Result, JudgeScoreWithJudge } from '@/types'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
-// ─── Aria's presenter assets (Amber – black jacket, home office) ──────────────
+// ─── Avatar Judge presenter assets (Amber – black jacket, home office) ──────────────
 const IDLE_VIDEO =
   'https://clips-presenters.d-id.com/v2/Amber_BlackJacket_HomeOffice/9WuHtiUDnL/Sc6QllBjEE/idle.mp4'
 
@@ -49,7 +49,7 @@ function buildCriterionScript(
   criteriaKey: string,
   submission: SubmissionWithAnalysis
 ): string {
-  // Prefer Aria's voice-rewritten judge score comment
+  // Prefer Avatar Judge's voice-rewritten judge score comment
   const aiScore = submission.judge_scores?.find(
     (s: JudgeScoreWithJudge) =>
       s.criteria_key === criteriaKey && s.judges?.is_ai_judge
@@ -78,7 +78,7 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }: Props) {
+export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState<string>('')
   const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
@@ -91,6 +91,10 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const speakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const wordStartDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // D-ID typically takes ~1.5s from API call to first audio frame
+  const D_ID_START_DELAY_MS = 1500
 
   // ── Speak a piece of text ──────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
@@ -99,7 +103,11 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
 
     setState('speaking')
     setCaption(text)
-    setActiveWordIdx(0)
+    setActiveWordIdx(-1)
+
+    if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+    if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
 
     await fetch('/api/avatar/speak', {
       method: 'POST',
@@ -111,27 +119,30 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
       }),
     })
 
-    // Estimate reading duration (~120 wpm = ~2 chars/sec) then reset
-    if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
-    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     const ms = Math.max(4000, text.length * 55)
     const words = text.trim().split(/\s+/)
     const msPerWord = ms / words.length
-    wordTimerRef.current = setInterval(() => {
-      setActiveWordIdx((i) => {
-        if (i >= words.length - 1) {
-          clearInterval(wordTimerRef.current!)
-          return i
-        }
-        return i + 1
-      })
-    }, msPerWord)
+
+    // Delay highlight start to match when D-ID actually begins speaking
+    wordStartDelayRef.current = setTimeout(() => {
+      setActiveWordIdx(0)
+      wordTimerRef.current = setInterval(() => {
+        setActiveWordIdx((i) => {
+          if (i >= words.length - 1) {
+            clearInterval(wordTimerRef.current!)
+            return i
+          }
+          return i + 1
+        })
+      }, msPerWord)
+    }, D_ID_START_DELAY_MS)
+
     speakTimerRef.current = setTimeout(() => {
       setState('connected')
       setCaption('')
       setActiveWordIdx(-1)
       if (wordTimerRef.current) clearInterval(wordTimerRef.current)
-    }, ms)
+    }, ms + D_ID_START_DELAY_MS)
   }, [state])
 
   // ── Connect WebRTC stream ──────────────────────────────────────────────────
@@ -217,6 +228,8 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
   // ── Close stream ───────────────────────────────────────────────────────────
   const close = useCallback(async () => {
     if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+    if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
     if (streamIdRef.current && sessionIdRef.current) {
       await fetch('/api/avatar/close', {
         method: 'DELETE',
@@ -236,6 +249,8 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
     connect()
     return () => {
       if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
+      if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+      if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
       pcRef.current?.close()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,6 +276,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
           <span className="text-xs font-medium text-purple-300 tracking-widest uppercase">
             {judgeName} · AI Judge
           </span>
+          <span className="text-xs text-gray-600 border border-white/10 px-2 py-0.5 rounded-full">D-ID</span>
         </div>
         <button
           onClick={close}
@@ -270,117 +286,86 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
         </button>
       </div>
 
-      {/* ── Main video area ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 min-h-0">
-        <div className="relative w-full max-w-3xl">
-          {/* Glow ring behind video */}
-          <div className="absolute inset-0 -m-4 rounded-3xl bg-purple-600/10 blur-2xl pointer-events-none" />
+      {/* ── Main content — side-by-side: avatar left, transcript right ─── */}
+      <div className="flex-1 flex items-center justify-center px-8 min-h-0 gap-10">
+        {/* Avatar column */}
+        <div className="shrink-0 flex flex-col items-center gap-4">
+          <div className="relative" style={{ width: 320, height: '60vh', maxHeight: 520 }}>
+            <div className="absolute inset-0 -m-4 rounded-3xl bg-purple-600/10 blur-2xl pointer-events-none" />
 
-          {/* Idle video – shown while WebRTC connecting */}
-          <video
-            src={IDLE_VIDEO}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className={`
-              w-full rounded-2xl object-cover shadow-2xl transition-opacity duration-500
-              ${streamReady ? 'hidden' : 'opacity-100'}
-            `}
-          />
+            {/* Idle video – shown while WebRTC connecting */}
+            <video
+              src={IDLE_VIDEO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className={`w-full h-full rounded-2xl object-cover shadow-2xl transition-opacity duration-500 ${streamReady ? 'hidden' : 'opacity-100'}`}
+            />
 
-          {/* WebRTC stream – shown once track arrives */}
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className={`
-              w-full rounded-2xl object-cover shadow-2xl transition-opacity duration-500
-              ${streamReady ? 'opacity-100' : 'hidden'}
-            `}
-          />
+            {/* WebRTC stream – shown once track arrives */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className={`w-full h-full rounded-2xl object-cover shadow-2xl transition-opacity duration-500 ${streamReady ? 'opacity-100' : 'hidden'}`}
+            />
 
-          {/* Connecting overlay */}
-          {state === 'connecting' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl">
-              <div className="flex items-center gap-2 text-gray-300 text-sm">
-                <span className="animate-spin h-4 w-4 border-2 border-purple-400 border-t-transparent rounded-full" />
-                Connecting…
+            {state === 'connecting' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl">
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <span className="animate-spin h-4 w-4 border-2 border-purple-400 border-t-transparent rounded-full" />
+                  Connecting…
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Error overlay */}
-          {state === 'error' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl gap-3">
-              <p className="text-rose-300 text-sm text-center max-w-xs">{errorMsg || 'Connection failed.'}</p>
-              <button
-                onClick={connect}
-                className="text-xs text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          )}
+            {state === 'error' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl gap-3">
+                <p className="text-rose-300 text-sm text-center max-w-xs">{errorMsg || 'Connection failed.'}</p>
+                <button onClick={connect} className="text-xs text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>
+            <div className="text-xs text-gray-500 mt-1">{submission.team_name}</div>
+          </div>
         </div>
 
-        {/* Caption — below video */}
+        {/* Transcript column */}
         {caption && state === 'speaking' && (() => {
-          const sentences = caption.split(/(?<=[.!?])\s{2}/)
-          // Build a flat word list with global indices
-          let globalIdx = 0
-          const sentenceData = sentences.map((s) => {
-            const words = s.trim().split(/\s+/)
-            const start = globalIdx
-            globalIdx += words.length
-            return { words, start }
-          })
+          const words = caption.trim().split(/\s+/)
           return (
-            <div className="w-full max-w-3xl px-4 py-3">
-              <div className="max-w-2xl mx-auto space-y-1">
-                {sentenceData.map(({ words, start }, si) => (
-                  <p
-                    key={si}
-                    className={`text-center leading-snug transition-all duration-300 ${
-                      si === sentenceData.length - 1
-                        ? 'text-white text-sm font-medium'
-                        : 'text-gray-400 text-xs'
-                    }`}
-                  >
-                    {words.map((word, wi) => {
-                      const idx = start + wi
-                      const isActive = idx === activeWordIdx
-                      return (
-                        <span
-                          key={wi}
-                          className={isActive
-                            ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
-                            : 'transition-colors duration-100'
-                          }
-                        >
-                          {word}{wi < words.length - 1 ? ' ' : ''}
-                        </span>
-                      )
-                    })}
-                  </p>
-                ))}
+            <div className="flex-1 max-w-md self-stretch flex flex-col justify-center min-h-0">
+              <div className="overflow-y-auto max-h-[60vh] rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
+                <div className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">Transcript</div>
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  {words.map((word, wi) => (
+                    <span
+                      key={wi}
+                      className={wi === activeWordIdx
+                        ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
+                        : 'transition-colors duration-100'
+                      }
+                    >
+                      {word}{wi < words.length - 1 ? ' ' : ''}
+                    </span>
+                  ))}
+                </p>
               </div>
             </div>
           )
         })()}
-
-        {/* Name row */}
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>
-          <div className="text-xs text-gray-500 mt-1">{submission.team_name}</div>
-        </div>
       </div>
 
       {/* ── Control row ──────────────────────────────────────────────────── */}
       <div className="shrink-0 px-8 py-6">
         {isConnected && (
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
-            {/* Summary button */}
             <button
               onClick={() => speak(buildSummaryScript(submission))}
               disabled={state === 'speaking'}
@@ -388,8 +373,6 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
             >
               Full Summary
             </button>
-
-            {/* Per-criterion buttons */}
             {DEFAULT_CRITERIA.map((c) => (
               <button
                 key={c.key}
@@ -402,8 +385,6 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
             ))}
           </div>
         )}
-
-        {/* Status line */}
         <div className="mt-4 text-center text-xs text-gray-600">
           {state === 'connecting' && 'Establishing secure stream…'}
           {state === 'connected' && 'Ready · Select a topic above'}

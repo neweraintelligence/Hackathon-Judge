@@ -39,7 +39,7 @@ export async function ensureAIJudge(eventId: string, name: string): Promise<stri
 
 /**
  * Submit AI judge scores for a submission from Pass 6 results.
- * Rewrites each criterion comment into Aria's first-person voice.
+ * Rewrites each criterion comment into Avatar Judge's first-person voice.
  */
 export async function submitAIJudgeScores(
   submissionId: string,
@@ -55,7 +55,7 @@ export async function submitAIJudgeScores(
     const criterion = criteria.find((c) => c.key === cs.criteria_key)
     if (!criterion) continue
 
-    // Rewrite reasoning in Aria's voice
+    // Rewrite reasoning in Avatar Judge's voice
     let comment = cs.reasoning
     try {
       const res = await client.messages.create({
