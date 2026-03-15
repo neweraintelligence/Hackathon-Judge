@@ -9,6 +9,8 @@ import { CriteriaBreakdown } from '@/components/ui/CriteriaBreakdown'
 import { AnalysisPipelineProgress } from './AnalysisPipelineProgress'
 import { AIJudgePanelCard } from '@/app/_clients/judge/AIJudgePanelCard'
 import { AriaStreamingAvatar } from '@/components/ui/AriaStreamingAvatar'
+import { HeyGenAriaAvatar } from '@/components/ui/HeyGenAriaAvatar'
+import { AvatarProviderPicker, type AvatarProvider } from '@/components/ui/AvatarProviderPicker'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
 interface Props {
@@ -27,16 +29,30 @@ export function SubmissionReportClient({ submission }: Props) {
   // Separate AI judge scores from human judge scores
   const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
   const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Aria' : 'Aria'
-  const [showAvatar, setShowAvatar] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
   const canHearAria = aiJudgeScores.length > 0 && isReady
 
   return (
     <>
-      {showAvatar && (
+      {showPicker && (
+        <AvatarProviderPicker
+          onSelect={(p) => { setShowPicker(false); setAvatarProvider(p) }}
+          onCancel={() => setShowPicker(false)}
+        />
+      )}
+      {avatarProvider === 'did' && (
         <AriaStreamingAvatar
           submission={submission}
           judgeName={aiJudgeName}
-          onClose={() => setShowAvatar(false)}
+          onClose={() => setAvatarProvider(null)}
+        />
+      )}
+      {avatarProvider === 'heygen' && (
+        <HeyGenAriaAvatar
+          submission={submission}
+          judgeName={aiJudgeName}
+          onClose={() => setAvatarProvider(null)}
         />
       )}
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -47,7 +63,7 @@ export function SubmissionReportClient({ submission }: Props) {
             <div className="label">Submission Report</div>
             {canHearAria && (
               <button
-                onClick={() => setShowAvatar(true)}
+                onClick={() => setShowPicker(true)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />

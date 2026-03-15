@@ -20,7 +20,13 @@
       "Bash(cmd /c \"del \\\\\"C:\\\\Users\\\\simon\\\\New Era AI\\\\Clients + Projects\\\\Hackathon Judge\\\\.git\\\\index.lock\\\\\"\" 2>&1)",
       "Bash(tasklist:*)",
       "Bash(powershell -Command \"Remove-Item -Path 'C:\\\\Users\\\\simon\\\\New Era AI\\\\Clients + Projects\\\\Hackathon Judge\\\\.git\\\\index.lock' -Force\" && sleep 1 && ls \"/c/Users/simon/New Era AI/Clients + Projects/Hackathon Judge/.git/index.lock\" 2>&1 || echo \"deleted\")",
-      "Bash(powershell -Command \"Get-Process git -ErrorAction SilentlyContinue | Select-Object Id, CPU, StartTime, CommandLine\" 2>&1)"
+      "Bash(powershell -Command \"Get-Process git -ErrorAction SilentlyContinue | Select-Object Id, CPU, StartTime, CommandLine\" 2>&1)",
+      "WebFetch(domain:docs.heygen.com)",
+      "WebFetch(domain:www.liveavatar.com)",
+      "WebFetch(domain:docs.d-id.com)",
+      "WebFetch(domain:api.d-id.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(curl:*)"
     ]
   }
 }

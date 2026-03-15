@@ -6,6 +6,8 @@ import { AIReportPanel } from './AIReportPanel'
 import { RubricPanel } from './RubricPanel'
 import { PillTabs } from '@/components/ui/PillTabs'
 import { AriaStreamingAvatar } from '@/components/ui/AriaStreamingAvatar'
+import { HeyGenAriaAvatar } from '@/components/ui/HeyGenAriaAvatar'
+import { AvatarProviderPicker, type AvatarProvider } from '@/components/ui/AvatarProviderPicker'
 
 interface Props {
   event: Event
@@ -15,7 +17,8 @@ interface Props {
 
 export function JudgeScoringClient({ event, submission, judgeId }: Props) {
   const [panel, setPanel] = useState<'ai' | 'rubric'>('ai')
-  const [showAvatar, setShowAvatar] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
+  const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
 
   const analysisReady = submission.ai_analyses.some(
     (a) => a.pass_name === 'pass6_synthesis' && a.status === 'complete'
@@ -28,11 +31,24 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
 
   return (
     <>
-      {showAvatar && (
+      {showPicker && (
+        <AvatarProviderPicker
+          onSelect={(p) => { setShowPicker(false); setAvatarProvider(p) }}
+          onCancel={() => setShowPicker(false)}
+        />
+      )}
+      {avatarProvider === 'did' && (
         <AriaStreamingAvatar
           submission={submission}
           judgeName={event.ai_judge_name || 'Aria'}
-          onClose={() => setShowAvatar(false)}
+          onClose={() => setAvatarProvider(null)}
+        />
+      )}
+      {avatarProvider === 'heygen' && (
+        <HeyGenAriaAvatar
+          submission={submission}
+          judgeName={event.ai_judge_name || 'Aria'}
+          onClose={() => setAvatarProvider(null)}
         />
       )}
 
@@ -56,7 +72,7 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
             <div className="flex items-center gap-3">
               {event.ai_judge_enabled && analysisReady && (
                 <button
-                  onClick={() => setShowAvatar(true)}
+                  onClick={() => setShowPicker(true)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
