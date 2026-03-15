@@ -6,5 +6,5 @@ export const MODELS = {
 export const THINKING_BUDGETS = {
   PASS2: 8000,
   PASS3: 6000,
-  PASS6: 16000,
+  PASS6: 8000,
 } as const
