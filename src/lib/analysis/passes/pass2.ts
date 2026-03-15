@@ -15,7 +15,6 @@ export async function runPass2(githubUrl: string, pass1: Pass1Result): Promise<P
     max_tokens: THINKING_BUDGETS.PASS2 + 4096,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGETS.PASS2 },
     messages: [{ role: 'user', content: prompt }],
-    betas: ['interleaved-thinking-2025-05-14'],
   } as any)
 
   // Extract thinking summary

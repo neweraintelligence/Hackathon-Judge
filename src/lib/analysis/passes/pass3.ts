@@ -13,7 +13,6 @@ export async function runPass3(pass1: Pass1Result, pass2: Pass2Result): Promise<
     max_tokens: THINKING_BUDGETS.PASS3 + 4096,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGETS.PASS3 },
     messages: [{ role: 'user', content: prompt }],
-    betas: ['interleaved-thinking-2025-05-14'],
   } as any)
 
   const thinkingBlock = response.content.find((b: any) => b.type === 'thinking')

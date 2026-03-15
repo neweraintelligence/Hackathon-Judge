@@ -29,7 +29,6 @@ export async function runPass6(
     max_tokens: THINKING_BUDGETS.PASS6 + 8192,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGETS.PASS6 },
     messages: [{ role: 'user', content: prompt }],
-    betas: ['interleaved-thinking-2025-05-14'],
   } as any)
 
   const thinkingBlock = response.content.find((b: any) => b.type === 'thinking')
