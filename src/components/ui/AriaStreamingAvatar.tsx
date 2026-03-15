@@ -93,7 +93,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const speakGenRef = useRef(0)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const D_ID_START_DELAY_MS = 2500
+  const D_ID_START_DELAY_MS = 500
   const RETRY_INTERVAL_MS = 1500
   const MAX_RETRIES = 12
 
@@ -135,7 +135,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       if (res.ok) {
         const ms = Math.max(4000, text.length * 55)
         const words = text.trim().split(/\s+/)
-        const msPerWord = ms / words.length
+        const msPerWord = (ms / words.length) * 0.95 // 5% faster to stay in sync
 
         wordStartDelayRef.current = setTimeout(() => {
           if (gen !== speakGenRef.current) return
