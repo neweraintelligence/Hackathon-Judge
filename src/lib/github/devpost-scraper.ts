@@ -9,7 +9,7 @@ export interface DevpostData {
 export async function scrapeDevpost(devpostUrl: string): Promise<DevpostData> {
   try {
     const res = await fetch(devpostUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CursorJudging/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HackathonJudging/1.0)' },
       signal: AbortSignal.timeout(10000),
     })
     const html = await res.text()

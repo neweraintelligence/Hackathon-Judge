@@ -22,7 +22,7 @@ export async function ensureAIJudge(eventId: string, name: string): Promise<stri
   const { data, error } = await supabase
     .from('judges')
     .insert({
-      email: 'aria@cursor-judging.ai',
+      email: 'aria@judging.internal',
       display_name: name,
       event_id: eventId,
       invite_token: token,

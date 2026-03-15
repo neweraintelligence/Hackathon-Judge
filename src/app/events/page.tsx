@@ -15,7 +15,7 @@ export default async function EventsPage() {
         <div className="flex items-center justify-between mb-10">
           <div>
             <Link href="/" className="text-sm text-gray-400 hover:text-gray-200 transition-colors mb-2 inline-block">
-              ← cursor<span className="text-blue-300">judging</span>
+              ← Judging
             </Link>
             <h1 className="text-3xl font-bold text-white">Events</h1>
           </div>

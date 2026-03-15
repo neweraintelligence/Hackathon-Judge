@@ -44,7 +44,7 @@ export function NewEventClient() {
 
             <div className="space-y-1">
               <label className="label" htmlFor="name">Event Name</label>
-              <input id="name" name="name" className="input" placeholder="e.g. Cursor Hackathon 2025" required />
+              <input id="name" name="name" className="input" placeholder="e.g. Hackathon 2025" required />
             </div>
 
             <div className="space-y-1">
