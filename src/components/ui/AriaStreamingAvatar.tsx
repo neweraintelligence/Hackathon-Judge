@@ -94,8 +94,8 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const wordStartDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakGenRef = useRef(0)
 
-  // D-ID typically takes ~1.5s from API call to first audio frame
-  const D_ID_START_DELAY_MS = 1500
+  // D-ID delay from API call to first audio frame (~4s at 150wpm for 10-word offset)
+  const D_ID_START_DELAY_MS = 4000
 
   // ── Speak a piece of text ──────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
@@ -377,8 +377,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
             <button
               onClick={() => speak(buildSummaryScript(submission))}
-              disabled={state === 'speaking'}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-600/80 hover:bg-purple-600 disabled:opacity-40 text-white transition-all"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-600/80 hover:bg-purple-600 text-white transition-all"
             >
               Full Summary
             </button>
@@ -386,8 +385,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
               <button
                 key={c.key}
                 onClick={() => speak(buildCriterionScript(c.key, submission))}
-                disabled={state === 'speaking'}
-                className="px-3 py-2 rounded-xl text-xs font-medium bg-white/8 hover:bg-white/14 disabled:opacity-40 text-gray-300 hover:text-white transition-all"
+                className="px-3 py-2 rounded-xl text-xs font-medium bg-white/8 hover:bg-white/14 text-gray-300 hover:text-white transition-all"
               >
                 {c.label}
               </button>
