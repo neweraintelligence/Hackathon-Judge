@@ -97,27 +97,36 @@ export async function runFullPipeline(
 
   try {
     // Pass 1 — Repo Archaeology
+    console.log(`[pipeline] ${submissionId} starting pass1`)
     await setPassStatus(submissionId, 'pass1_repo_archaeology', 'running')
     const pass1 = await runPass1(githubUrl)
     await savePassResult(submissionId, 'pass1_repo_archaeology', 'claude-sonnet-4-6', pass1)
+    console.log(`[pipeline] ${submissionId} pass1 done`)
 
     // Pass 2 — Code Deep Dive
+    console.log(`[pipeline] ${submissionId} starting pass2`)
     await setPassStatus(submissionId, 'pass2_code_deep_dive', 'running')
     const pass2 = await runPass2(githubUrl, pass1)
-    await savePassResult(submissionId, 'pass2_code_deep_dive', 'claude-opus-4-6', pass2)
+    await savePassResult(submissionId, 'pass2_code_deep_dive', 'claude-sonnet-4-6', pass2)
+    console.log(`[pipeline] ${submissionId} pass2 done`)
 
     // Pass 3 — Innovation Audit
+    console.log(`[pipeline] ${submissionId} starting pass3`)
     await setPassStatus(submissionId, 'pass3_innovation_audit', 'running')
     const pass3 = await runPass3(pass1, pass2)
-    await savePassResult(submissionId, 'pass3_innovation_audit', 'claude-opus-4-6', pass3)
+    await savePassResult(submissionId, 'pass3_innovation_audit', 'claude-sonnet-4-6', pass3)
+    console.log(`[pipeline] ${submissionId} pass3 done`)
 
     // Pass 4 — Visual/UX (only if screenshots exist)
+    console.log(`[pipeline] ${submissionId} starting pass4`)
     let pass4 = null
     await setPassStatus(submissionId, 'pass4_visual_ux', 'running')
     pass4 = await runPass4(screenshotUrls)
     await savePassResult(submissionId, 'pass4_visual_ux', 'claude-sonnet-4-6', pass4)
+    console.log(`[pipeline] ${submissionId} pass4 done`)
 
     // Pass 5 — Pool Comparison (fetch pool from DB)
+    console.log(`[pipeline] ${submissionId} starting pass5`)
     await setPassStatus(submissionId, 'pass5_pool_comparison', 'running')
     const { data: poolData } = await supabase
       .from('ai_analyses')
@@ -150,11 +159,14 @@ export async function runFullPipeline(
 
     const pass5 = await runPass5(submissionId, teamName, pool)
     await savePassResult(submissionId, 'pass5_pool_comparison', 'claude-sonnet-4-6', pass5)
+    console.log(`[pipeline] ${submissionId} pass5 done`)
 
     // Pass 6 — Synthesis
+    console.log(`[pipeline] ${submissionId} starting pass6`)
     await setPassStatus(submissionId, 'pass6_synthesis', 'running')
     const pass6 = await runPass6(teamName, criteria, pass1, pass2, pass3, pass4, pass5)
     await savePassResult(submissionId, 'pass6_synthesis', 'claude-opus-4-6', pass6)
+    console.log(`[pipeline] ${submissionId} pass6 done`)
 
     // Save ai_scores from pass6
     await saveAIScores(submissionId, pass6)

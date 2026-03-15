@@ -27,15 +27,15 @@ export async function POST(req: NextRequest) {
       .sort((a: any, b: any) => a.sort_order - b.sort_order)
       .map((m: any) => m.storage_url)
 
-    // Run pipeline in background (fire-and-forget for now)
-    runFullPipeline(
+    // Run pipeline and await it — keeps connection open so Render doesn't kill it
+    await runFullPipeline(
       submissionId,
       submission.event_id,
       submission.github_url,
       submission.team_name,
       submission.events.criteria_config,
       screenshotUrls
-    ).catch(console.error)
+    )
 
     return NextResponse.json({ ok: true, message: 'Analysis pipeline started' })
   } catch (error: any) {
