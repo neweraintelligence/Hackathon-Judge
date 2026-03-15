@@ -9,7 +9,7 @@ interface AIJudgeAvatarProps {
 
 export function AIJudgeAvatar({ size = 40, className = '', pulse = false }: AIJudgeAvatarProps) {
   const id = useId().replace(/:/g, '')
-  const gradientId = `ariaGradient-${id}`
+  const gradientId = `judgeGradient-${id}`
 
   return (
     <div

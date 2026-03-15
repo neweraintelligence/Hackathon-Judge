@@ -8,7 +8,7 @@ import StreamingAvatar, {
 } from '@heygen/streaming-avatar'
 import type { SubmissionWithAnalysis } from '@/types'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
-import { buildSummaryScript, buildCriterionScript } from '@/lib/aria-scripts'
+import { buildSummaryScript, buildCriterionScript } from '@/lib/avatar-scripts'
 
 // Streaming-compatible Interactive Avatar (Katya Professional Look)
 const AVATAR_ID = 'Alessandra_ProfessionalLook_public'

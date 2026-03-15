@@ -31,7 +31,7 @@ export function SubmissionReportClient({ submission, aiJudgeName: aiJudgeNamePro
 
   // Separate AI judge scores from human judge scores
   const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
-  const aiJudgeName = aiJudgeNameProp || (aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Avatar Judge' : 'Avatar Judge')
+  const aiJudgeName = aiJudgeNameProp || 'Avatar Judge'
   const [showPicker, setShowPicker] = useState(false)
   const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
   const canHearAvatarJudge = aiJudgeScores.length > 0 && isReady
