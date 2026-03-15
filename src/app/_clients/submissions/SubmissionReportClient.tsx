@@ -16,9 +16,10 @@ import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
 interface Props {
   submission: SubmissionWithAnalysis
+  aiJudgeName?: string
 }
 
-export function SubmissionReportClient({ submission }: Props) {
+export function SubmissionReportClient({ submission, aiJudgeName: aiJudgeNameProp }: Props) {
   const router = useRouter()
   const pass1 = submission.ai_analyses.find((a) => a.pass_name === 'pass1_repo_archaeology')?.result as Pass1Result | null
   const pass6 = submission.ai_analyses.find((a) => a.pass_name === 'pass6_synthesis')?.result as Pass6Result | null
@@ -30,7 +31,7 @@ export function SubmissionReportClient({ submission }: Props) {
 
   // Separate AI judge scores from human judge scores
   const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
-  const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Avatar Judge' : 'Avatar Judge'
+  const aiJudgeName = aiJudgeNameProp || (aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Avatar Judge' : 'Avatar Judge')
   const [showPicker, setShowPicker] = useState(false)
   const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
   const canHearAvatarJudge = aiJudgeScores.length > 0 && isReady

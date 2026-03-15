@@ -32,6 +32,17 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
   return data as Event
 }
 
+export async function getEventByIdMinimal(eventId: string): Promise<{ ai_judge_name: string | null } | null> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('events')
+    .select('ai_judge_name')
+    .eq('id', eventId)
+    .single()
+  if (error) return null
+  return data
+}
+
 // ─── Submissions ───────────────────────────────────────────────────────────────
 
 export async function getSubmissions(eventId: string): Promise<Submission[]> {

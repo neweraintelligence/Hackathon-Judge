@@ -17,7 +17,13 @@ export async function ensureAIJudge(eventId: string, name: string): Promise<stri
     .eq('invite_token', token)
     .single()
 
-  if (existing) return existing.id
+  if (existing) {
+    await supabase
+      .from('judges')
+      .update({ display_name: name })
+      .eq('id', existing.id)
+    return existing.id
+  }
 
   const { data, error } = await supabase
     .from('judges')

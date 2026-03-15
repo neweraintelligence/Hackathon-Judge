@@ -97,7 +97,7 @@ export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
                 <img
                   src={heygenPreview}
                   alt={heygenName}
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-contain object-center"
                 />
               ) : (
                 <div className="text-gray-700 text-4xl">◈</div>

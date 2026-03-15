@@ -49,14 +49,12 @@ function buildCriterionScript(
   criteriaKey: string,
   submission: SubmissionWithAnalysis
 ): string {
-  // Prefer Avatar Judge's voice-rewritten judge score comment
   const aiScore = submission.judge_scores?.find(
     (s: JudgeScoreWithJudge) =>
       s.criteria_key === criteriaKey && s.judges?.is_ai_judge
   )
   if (aiScore?.comment) return ensurePeriod(aiScore.comment)
 
-  // Fall back to pass6 criterion reasoning
   const pass6 = submission.ai_analyses.find(
     (a) => a.pass_name === 'pass6_synthesis'
   )?.result as Pass6Result | null
@@ -93,66 +91,83 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const wordStartDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const speakGenRef = useRef(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // D-ID delay from API call to first audio frame (~4s at 150wpm for 10-word offset)
   const D_ID_START_DELAY_MS = 4000
+  const RETRY_INTERVAL_MS = 1500
+  const MAX_RETRIES = 12
 
-  // ── Speak a piece of text ──────────────────────────────────────────────────
+  const clearTimers = useCallback(() => {
+    if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+    if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
+  }, [])
+
+  // ── Speak a piece of text (retries on 400 while D-ID finishes previous) ──
   const speak = useCallback(async (text: string) => {
     if (state === 'connecting') return
     if (!streamIdRef.current || !sessionIdRef.current) return
 
-    // Increment generation — any in-flight speak() calls will detect they're stale
     const gen = ++speakGenRef.current
-
+    clearTimers()
     setState('speaking')
     setCaption(text)
     setActiveWordIdx(-1)
 
-    if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
-    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
-    if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
+    let attempts = 0
 
-    await fetch('/api/avatar/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        stream_id: streamIdRef.current,
-        session_id: sessionIdRef.current,
-        text,
-      }),
-    })
-
-    // A newer speak() call was made while we were awaiting — bail out
-    if (gen !== speakGenRef.current) return
-
-    const ms = Math.max(4000, text.length * 55)
-    const words = text.trim().split(/\s+/)
-    const msPerWord = ms / words.length
-
-    // Delay highlight start to match when D-ID actually begins speaking
-    wordStartDelayRef.current = setTimeout(() => {
+    const trySend = async () => {
       if (gen !== speakGenRef.current) return
-      setActiveWordIdx(0)
-      wordTimerRef.current = setInterval(() => {
-        setActiveWordIdx((i) => {
-          if (i >= words.length - 1) {
-            clearInterval(wordTimerRef.current!)
-            return i
-          }
-          return i + 1
-        })
-      }, msPerWord)
-    }, D_ID_START_DELAY_MS)
 
-    speakTimerRef.current = setTimeout(() => {
+      const res = await fetch('/api/avatar/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stream_id: streamIdRef.current,
+          session_id: sessionIdRef.current,
+          text,
+        }),
+      })
+
       if (gen !== speakGenRef.current) return
-      setState('connected')
-      setCaption('')
-      setActiveWordIdx(-1)
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current)
-    }, ms + D_ID_START_DELAY_MS)
-  }, [state])
+
+      if (res.ok) {
+        const ms = Math.max(4000, text.length * 55)
+        const words = text.trim().split(/\s+/)
+        const msPerWord = ms / words.length
+
+        wordStartDelayRef.current = setTimeout(() => {
+          if (gen !== speakGenRef.current) return
+          setActiveWordIdx(0)
+          wordTimerRef.current = setInterval(() => {
+            setActiveWordIdx((i) => {
+              if (i >= words.length - 1) {
+                clearInterval(wordTimerRef.current!)
+                return i
+              }
+              return i + 1
+            })
+          }, msPerWord)
+        }, D_ID_START_DELAY_MS)
+
+        speakTimerRef.current = setTimeout(() => {
+          if (gen !== speakGenRef.current) return
+          setState('connected')
+          setCaption('')
+          setActiveWordIdx(-1)
+          if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+        }, ms + D_ID_START_DELAY_MS)
+      } else if (res.status === 400 && ++attempts < MAX_RETRIES) {
+        retryTimerRef.current = setTimeout(trySend, RETRY_INTERVAL_MS)
+      } else {
+        setState('connected')
+        setCaption('')
+      }
+    }
+
+    await trySend()
+  }, [state, clearTimers])
 
   // ── Connect WebRTC stream ──────────────────────────────────────────────────
   const connect = useCallback(async () => {
@@ -160,7 +175,6 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
     setErrorMsg('')
 
     try {
-      // 1. Start stream session (server proxies to D-ID)
       const startRes = await fetch('/api/avatar/start', { method: 'POST' })
       if (!startRes.ok) {
         const err = await startRes.json()
@@ -171,11 +185,9 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       streamIdRef.current = id
       sessionIdRef.current = session_id
 
-      // 2. Create WebRTC peer connection
       const pc = new RTCPeerConnection({ iceServers: ice_servers ?? [] })
       pcRef.current = pc
 
-      // 3. Bind incoming video/audio track to video element
       pc.ontrack = (event) => {
         if (videoRef.current && event.streams[0]) {
           videoRef.current.srcObject = event.streams[0]
@@ -183,11 +195,8 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
         }
       }
 
-      // 4. Set remote description from D-ID offer
       await pc.setRemoteDescription(new RTCSessionDescription(offer))
 
-      // 5. Set up ICE candidate trickling BEFORE setLocalDescription so no
-      //    candidates are missed — D-ID expects trickle ICE
       pc.onicecandidate = async ({ candidate }) => {
         if (!candidate) return
         await fetch('/api/avatar/ice', {
@@ -197,21 +206,18 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
         })
       }
 
-      // 6. Create + set SDP answer (triggers ICE gathering)
       const answer = await pc.createAnswer()
       await pc.setLocalDescription(answer)
 
-      // 7. Send the SDP answer to D-ID immediately (trickle ICE — candidates follow separately)
       await fetch('/api/avatar/sdp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stream_id: id, session_id, answer }),
       })
 
-      // 8. Track connection state
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState
-        console.log('[Aria] connection state:', s)
+        console.log('[Avatar] connection state:', s)
         if (s === 'connected') {
           setState('connected')
           speak(buildSummaryScript(submission))
@@ -225,7 +231,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       }
 
       pc.onicecandidateerror = (e) => {
-        console.warn('[Aria] ICE candidate error', e)
+        console.warn('[Avatar] ICE candidate error', e)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -236,9 +242,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
 
   // ── Close stream ───────────────────────────────────────────────────────────
   const close = useCallback(async () => {
-    if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
-    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
-    if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
+    clearTimers()
     if (streamIdRef.current && sessionIdRef.current) {
       await fetch('/api/avatar/close', {
         method: 'DELETE',
@@ -251,15 +255,13 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
     }
     pcRef.current?.close()
     onClose()
-  }, [onClose])
+  }, [onClose, clearTimers])
 
   // ── Connect on mount ───────────────────────────────────────────────────────
   useEffect(() => {
     connect()
     return () => {
-      if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current)
-      if (wordStartDelayRef.current) clearTimeout(wordStartDelayRef.current)
+      clearTimers()
       pcRef.current?.close()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
