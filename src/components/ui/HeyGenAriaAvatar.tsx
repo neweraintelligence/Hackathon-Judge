@@ -134,51 +134,54 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
         </button>
       </div>
 
-      {/* Video area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 min-h-0">
-        <div className="relative mx-auto w-full max-w-sm" style={{ aspectRatio: '9/16', maxHeight: '60vh' }}>
-          <div className="absolute inset-0 -m-4 rounded-3xl bg-purple-600/10 blur-2xl pointer-events-none" />
+      {/* Main content — side-by-side: avatar left, transcript right */}
+      <div className="flex-1 flex items-center justify-center px-8 min-h-0 gap-10">
+        {/* Avatar column */}
+        <div className="shrink-0 flex flex-col items-center gap-4">
+          <div className="relative" style={{ width: 320, height: '60vh', maxHeight: 520 }}>
+            <div className="absolute inset-0 -m-4 rounded-3xl bg-purple-600/10 blur-2xl pointer-events-none" />
 
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full rounded-2xl object-contain shadow-2xl bg-[#0a0b0d]"
-          />
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full rounded-2xl object-contain shadow-2xl bg-[#0a0b0d]"
+            />
 
-          {/* Connecting overlay */}
-          {state === 'connecting' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl">
-              <div className="flex items-center gap-2 text-gray-300 text-sm">
-                <span className="animate-spin h-4 w-4 border-2 border-purple-400 border-t-transparent rounded-full" />
-                Connecting…
+            {state === 'connecting' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-2xl">
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <span className="animate-spin h-4 w-4 border-2 border-purple-400 border-t-transparent rounded-full" />
+                  Connecting…
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Error overlay */}
-          {state === 'error' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl gap-3">
-              <p className="text-rose-300 text-sm text-center max-w-xs">{errorMsg || 'Connection failed.'}</p>
-              <button onClick={connect} className="text-xs text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
-                Retry
-              </button>
-            </div>
-          )}
+            {state === 'error' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-2xl gap-3">
+                <p className="text-rose-300 text-sm text-center max-w-xs">{errorMsg || 'Connection failed.'}</p>
+                <button onClick={connect} className="text-xs text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors">
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* Caption overlay — bottom of video */}
-          {caption && state === 'speaking' && (
-            <div className="absolute bottom-0 left-0 right-0 px-4 py-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl">
-              <p className="text-white text-sm leading-relaxed text-center">{caption}</p>
-            </div>
-          )}
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>
+            <div className="text-xs text-gray-500 mt-1">{submission.team_name}</div>
+          </div>
         </div>
 
-
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>
-          <div className="text-xs text-gray-500 mt-1">{submission.team_name}</div>
-        </div>
+        {/* Transcript column */}
+        {caption && state === 'speaking' && (
+          <div className="flex-1 max-w-md self-stretch flex flex-col justify-center min-h-0">
+            <div className="overflow-y-auto max-h-[60vh] rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
+              <div className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">Transcript</div>
+              <p className="text-gray-200 text-sm leading-relaxed">{caption}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
