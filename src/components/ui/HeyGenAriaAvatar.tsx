@@ -35,14 +35,14 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClo
   // ── Speak ──────────────────────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
     if (!avatarRef.current || state === 'connecting') return
+    try { await avatarRef.current.interrupt() } catch {}
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     setState('speaking')
     setCaption(text)
     setActiveWordIdx(-1)
-    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     const words = text.trim().split(/\s+/)
     const ms = Math.max(4000, text.length * 55)
     const msPerWord = ms / words.length
-    // Store for AVATAR_START_TALKING to kick off
     pendingWordsRef.current = { words, msPerWord }
     try {
       await avatarRef.current.speak({ text, task_type: TaskType.REPEAT })
@@ -233,8 +233,7 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClo
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
             <button
               onClick={() => speak(buildSummaryScript(submission))}
-              disabled={state === 'speaking'}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-600/80 hover:bg-purple-600 disabled:opacity-40 text-white transition-all"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-600/80 hover:bg-purple-600 text-white transition-all"
             >
               Full Summary
             </button>
@@ -242,8 +241,7 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClo
               <button
                 key={c.key}
                 onClick={() => speak(buildCriterionScript(c.key, submission))}
-                disabled={state === 'speaking'}
-                className="px-3 py-2 rounded-xl text-xs font-medium bg-white/8 hover:bg-white/14 disabled:opacity-40 text-gray-300 hover:text-white transition-all"
+                className="px-3 py-2 rounded-xl text-xs font-medium bg-white/8 hover:bg-white/14 text-gray-300 hover:text-white transition-all"
               >
                 {c.label}
               </button>
