@@ -10,8 +10,8 @@ import type { SubmissionWithAnalysis } from '@/types'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 import { buildSummaryScript, buildCriterionScript } from '@/lib/aria-scripts'
 
-// Streaming-compatible Interactive Avatar (Marianne Professional Look)
-const AVATAR_ID = 'Marianne_ProfessionalLook_public'
+// Streaming-compatible Interactive Avatar (Anastasia Professional Look — closest to Stephanie)
+const AVATAR_ID = 'Anastasia_ProfessionalLook_public'
 
 type AvatarState = 'idle' | 'connecting' | 'connected' | 'speaking' | 'error'
 
@@ -136,14 +136,14 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
 
       {/* Video area */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 min-h-0">
-        <div className="relative w-full max-w-3xl">
+        <div className="relative mx-auto w-full max-w-sm" style={{ aspectRatio: '9/16', maxHeight: '60vh' }}>
           <div className="absolute inset-0 -m-4 rounded-3xl bg-purple-600/10 blur-2xl pointer-events-none" />
 
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className="w-full rounded-2xl object-cover shadow-2xl"
+            className="w-full h-full rounded-2xl object-contain shadow-2xl bg-[#0a0b0d]"
           />
 
           {/* Caption */}
