@@ -26,7 +26,11 @@
       "WebFetch(domain:docs.d-id.com)",
       "WebFetch(domain:api.d-id.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:docs.liveavatar.com)",
+      "WebFetch(domain:npmjs.com)",
+      "WebFetch(domain:help.heygen.com)",
+      "WebFetch(domain:elevenlabs.io)"
     ]
   }
 }

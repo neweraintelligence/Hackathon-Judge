@@ -11,7 +11,7 @@ import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 import { buildSummaryScript, buildCriterionScript } from '@/lib/aria-scripts'
 
 // Streaming-compatible Interactive Avatar (Katya Professional Look)
-const AVATAR_ID = 'Katya_ProfessionalLook_public'
+const AVATAR_ID = 'Alessandra_ProfessionalLook_public'
 
 type AvatarState = 'idle' | 'connecting' | 'connected' | 'speaking' | 'error'
 
@@ -165,14 +165,15 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
               </button>
             </div>
           )}
+
+          {/* Caption overlay — bottom of video */}
+          {caption && state === 'speaking' && (
+            <div className="absolute bottom-0 left-0 right-0 px-4 py-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl">
+              <p className="text-white text-sm leading-relaxed text-center">{caption}</p>
+            </div>
+          )}
         </div>
 
-        {/* Caption — below video */}
-        {caption && state === 'speaking' && (
-          <div className="w-full max-w-2xl px-6 py-3">
-            <p className="text-white text-sm leading-relaxed text-center">{caption}</p>
-          </div>
-        )}
 
         <div className="text-center">
           <div className="text-2xl font-semibold text-white tracking-tight">{judgeName}</div>
