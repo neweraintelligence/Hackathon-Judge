@@ -42,6 +42,17 @@ export async function deleteSubmission(submissionId: string): Promise<{ error?: 
   return {}
 }
 
+export async function clearAllSubmissions(eventId: string): Promise<{ error?: string }> {
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('submissions')
+    .delete()
+    .eq('event_id', eventId)
+  if (error) return { error: error.message }
+  revalidatePath('/events')
+  return {}
+}
+
 export async function updateSubmissionStatus(
   submissionId: string,
   status: string
