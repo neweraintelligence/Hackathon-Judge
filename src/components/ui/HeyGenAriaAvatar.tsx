@@ -10,8 +10,8 @@ import type { SubmissionWithAnalysis } from '@/types'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 import { buildSummaryScript, buildCriterionScript } from '@/lib/aria-scripts'
 
-// Stephanie talking photo ID on this HeyGen account
-const AVATAR_ID = '53df91518de248f0b8896bf61496b2f9'
+// Streaming-compatible Interactive Avatar (Marianne Professional Look)
+const AVATAR_ID = 'Marianne_ProfessionalLook_public'
 
 type AvatarState = 'idle' | 'connecting' | 'connected' | 'speaking' | 'error'
 
