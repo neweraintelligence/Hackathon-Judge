@@ -11,8 +11,8 @@
     --border: #2a2c31;
     --border-strong: #3a3d45;
     --muted: #858b98;
-    --accent: #4d8dff;
-    --accent-strong: #73a6ff;
+    --accent: #3b66f5;
+    --accent-strong: #5b80ff;
     --text: #f4f5f7;
     --text-muted: #a3a9b5;
     --success: #16c784;
@@ -36,7 +36,7 @@
   }
 
   ::selection {
-    background: rgba(77, 141, 255, 0.28);
+    background: rgba(59, 102, 245, 0.28);
     color: #ffffff;
   }
 
@@ -77,22 +77,28 @@
   }
 
   .btn-primary {
-    @apply text-white font-medium px-4 py-2 rounded-xl transition-all duration-300;
-    background: #4d8dff;
-    box-shadow: none;
+    @apply text-white font-medium px-4 py-2 rounded-xl transition-all duration-300 relative;
+    background: radial-gradient(75% 75% at 50% 10%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%), #3b66f5;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0.5px rgba(255, 255, 255, 0.15);
   }
   .btn-primary:hover {
-    background: #73a6ff;
+    background: radial-gradient(75% 75% at 50% 10%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 100%), #4d77ff;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-0.5px);
+    box-shadow: 0 4px 12px rgba(59, 102, 245, 0.25), inset 0 1px 0.5px rgba(255, 255, 255, 0.25);
   }
 
   .btn-secondary {
     @apply text-gray-200 font-medium px-4 py-2 rounded-xl transition-all duration-200;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.16);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
   }
 
   .btn-ghost {
@@ -111,8 +117,8 @@
     border-color: rgba(255, 255, 255, 0.18);
   }
   .input:focus {
-    border-color: rgba(77, 141, 255, 0.9);
-    box-shadow: 0 0 0 3px rgba(77, 141, 255, 0.2);
+    border-color: rgba(59, 102, 245, 0.9);
+    box-shadow: 0 0 0 3px rgba(59, 102, 245, 0.2);
     outline: none;
   }
 
@@ -135,8 +141,8 @@
 
   .pill-tab-active {
     @apply text-white;
-    background: rgba(77, 141, 255, 0.26);
-    border: 1px solid rgba(77, 141, 255, 0.45);
+    background: rgba(59, 102, 245, 0.26);
+    border: 1px solid rgba(59, 102, 245, 0.45);
     box-shadow: none;
   }
 

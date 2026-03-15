@@ -19,7 +19,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ghost:
         'btn-ghost',
       danger:
-        'bg-red-600/18 hover:bg-red-600/26 text-red-300 border border-red-400/30',
+        'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20',
     }
     const sizes = {
       sm: 'text-xs px-3.5 py-2',

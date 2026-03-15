@@ -15,7 +15,7 @@ interface Props {
 
 export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
   const [heygenPreview, setHeygenPreview] = useState<string | null>(null)
-  const [heygenName, setHeygenName] = useState('Alessandra')
+  const [heygenName, setHeygenName] = useState('Katya')
   const [hovered, setHovered] = useState<AvatarProvider | null>(null)
 
   useEffect(() => {
