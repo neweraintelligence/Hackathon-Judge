@@ -94,8 +94,8 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
                           <Button variant="ghost" size="sm">View Report</Button>
                         </Link>
                       )}
-                      {s.status === 'pending' && (
-                        <TriggerAnalysisButton submissionId={s.id} />
+                      {(s.status === 'pending' || s.status === 'error') && (
+                        <TriggerAnalysisButton submissionId={s.id} label={s.status === 'error' ? 'Retry' : 'Analyze'} />
                       )}
                     </div>
                   </div>
@@ -203,7 +203,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
 
 // ─── Inline small components ──────────────────────────────────────────────────
 
-function TriggerAnalysisButton({ submissionId }: { submissionId: string }) {
+function TriggerAnalysisButton({ submissionId, label = 'Analyze' }: { submissionId: string; label?: string }) {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -224,7 +224,7 @@ function TriggerAnalysisButton({ submissionId }: { submissionId: string }) {
   if (done) return <Badge variant="yellow">Analyzing...</Badge>
   return (
     <Button size="sm" variant="secondary" loading={loading} onClick={trigger}>
-      Analyze
+      {label}
     </Button>
   )
 }
