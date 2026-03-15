@@ -10,6 +10,10 @@ const IDLE_VIDEO =
 
 // ─── Speech script builders ───────────────────────────────────────────────────
 
+function ensurePeriod(s: string): string {
+  return s.trim().replace(/[.!?]?\s*$/, '.')
+}
+
 function buildSummaryScript(submission: SubmissionWithAnalysis): string {
   const pass6 = submission.ai_analyses.find(
     (a) => a.pass_name === 'pass6_synthesis'
@@ -19,24 +23,26 @@ function buildSummaryScript(submission: SubmissionWithAnalysis): string {
     return `I haven't finished my analysis of ${submission.team_name} yet. Check back when the pipeline completes.`
   }
 
-  const parts: string[] = [`${submission.team_name}.`]
+  const sentences: string[] = []
+
+  sentences.push(`Here's my read on ${submission.team_name}.`)
 
   if (pass6.most_impressive_aspect) {
-    parts.push(pass6.most_impressive_aspect)
+    sentences.push(ensurePeriod(pass6.most_impressive_aspect))
   }
 
   if (pass6.judge_briefing_points?.length > 0) {
-    parts.push(`For the panel: ${pass6.judge_briefing_points[0]}`)
+    sentences.push(`For the panel — ${ensurePeriod(pass6.judge_briefing_points[0])}`)
     if (pass6.judge_briefing_points[1]) {
-      parts.push(pass6.judge_briefing_points[1])
+      sentences.push(ensurePeriod(pass6.judge_briefing_points[1]))
     }
   }
 
   if (pass6.concerns_and_limitations?.length > 0) {
-    parts.push(`Worth probing: ${pass6.concerns_and_limitations[0]}`)
+    sentences.push(`Worth probing: ${ensurePeriod(pass6.concerns_and_limitations[0])}`)
   }
 
-  return parts.join(' ')
+  return sentences.join('  ')
 }
 
 function buildCriterionScript(
@@ -48,14 +54,14 @@ function buildCriterionScript(
     (s: JudgeScoreWithJudge) =>
       s.criteria_key === criteriaKey && s.judges?.is_ai_judge
   )
-  if (aiScore?.comment) return aiScore.comment
+  if (aiScore?.comment) return ensurePeriod(aiScore.comment)
 
   // Fall back to pass6 criterion reasoning
   const pass6 = submission.ai_analyses.find(
     (a) => a.pass_name === 'pass6_synthesis'
   )?.result as Pass6Result | null
   const score = pass6?.criteria_scores?.find((s) => s.criteria_key === criteriaKey)
-  if (score?.reasoning) return score.reasoning
+  if (score?.reasoning) return ensurePeriod(score.reasoning)
 
   return `I don't have a specific assessment for this criterion yet.`
 }
@@ -277,12 +283,23 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
             `}
           />
 
-          {/* Caption overlay */}
+          {/* Caption overlay — split into sentences, shown progressively */}
           {caption && state === 'speaking' && (
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent rounded-b-2xl">
-              <p className="text-white text-sm leading-relaxed text-center max-w-2xl mx-auto">
-                {caption}
-              </p>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent rounded-b-2xl px-8 py-6">
+              <div className="max-w-2xl mx-auto space-y-1">
+                {caption.split(/(?<=[.!?])\s{2}/).map((sentence, i, arr) => (
+                  <p
+                    key={i}
+                    className={`text-center leading-snug transition-all duration-300 ${
+                      i === arr.length - 1
+                        ? 'text-white text-sm font-medium'
+                        : 'text-gray-400 text-xs'
+                    }`}
+                  >
+                    {sentence.trim()}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 
