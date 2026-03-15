@@ -47,7 +47,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
             <div>
               <h1 className="text-3xl font-bold text-white">{event.name}</h1>
               <p className="text-gray-500 text-sm mt-1">
-                {new Date(event.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Date(event.date + 'T00:00:00Z').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                 {' · '}
                 <span className="capitalize">{event.judging_mode} mode</span>
               </p>

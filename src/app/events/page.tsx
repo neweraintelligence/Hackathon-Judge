@@ -43,10 +43,11 @@ export default async function EventsPage() {
                 <div>
                   <div className="font-semibold text-white mb-0.5">{event.name}</div>
                   <div className="text-sm text-gray-500">
-                    {new Date(event.date).toLocaleDateString('en-US', {
+                    {new Date(event.date + 'T00:00:00Z').toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
+                      timeZone: 'UTC',
                     })}
                     {' · '}
                     <span className="capitalize">{event.judging_mode} mode</span>

@@ -1,3 +1,6 @@
+'use client'
+import { useId } from 'react'
+
 interface AIJudgeAvatarProps {
   size?: number
   className?: string
@@ -5,7 +8,8 @@ interface AIJudgeAvatarProps {
 }
 
 export function AIJudgeAvatar({ size = 40, className = '', pulse = false }: AIJudgeAvatarProps) {
-  const r = size / 2
+  const id = useId().replace(/:/g, '')
+  const gradientId = `ariaGradient-${id}`
 
   return (
     <div
@@ -56,7 +60,7 @@ export function AIJudgeAvatar({ size = 40, className = '', pulse = false }: AIJu
         <line x1="78" y1="78" x2="70" y2="70" stroke="#7c3aed" strokeWidth="1" strokeOpacity="0.3" />
 
         {/* Inner glow circle */}
-        <circle cx="50" cy="50" r="28" fill="url(#ariaGradient)" fillOpacity="0.15" />
+        <circle cx="50" cy="50" r="28" fill={`url(#${gradientId})`} fillOpacity="0.15" />
         <circle cx="50" cy="50" r="28" stroke="#7c3aed" strokeWidth="1" strokeOpacity="0.5" />
 
         {/* Eyes */}
@@ -76,7 +80,7 @@ export function AIJudgeAvatar({ size = 40, className = '', pulse = false }: AIJu
 
         {/* Gradient def */}
         <defs>
-          <radialGradient id="ariaGradient" cx="50%" cy="50%" r="50%">
+          <radialGradient id={gradientId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#7c3aed" />
             <stop offset="100%" stopColor="#1a1025" />
           </radialGradient>
