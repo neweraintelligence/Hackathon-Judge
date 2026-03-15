@@ -81,6 +81,7 @@ interface Props {
 export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState<string>('')
+  const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
   const [errorMsg, setErrorMsg] = useState<string>('')
   const [streamReady, setStreamReady] = useState(false)
 
@@ -89,6 +90,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
   const sessionIdRef = useRef<string>('')
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const speakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Speak a piece of text ──────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
@@ -97,6 +99,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
 
     setState('speaking')
     setCaption(text)
+    setActiveWordIdx(0)
 
     await fetch('/api/avatar/speak', {
       method: 'POST',
@@ -110,10 +113,24 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
 
     // Estimate reading duration (~120 wpm = ~2 chars/sec) then reset
     if (speakTimerRef.current) clearTimeout(speakTimerRef.current)
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     const ms = Math.max(4000, text.length * 55)
+    const words = text.trim().split(/\s+/)
+    const msPerWord = ms / words.length
+    wordTimerRef.current = setInterval(() => {
+      setActiveWordIdx((i) => {
+        if (i >= words.length - 1) {
+          clearInterval(wordTimerRef.current!)
+          return i
+        }
+        return i + 1
+      })
+    }, msPerWord)
     speakTimerRef.current = setTimeout(() => {
       setState('connected')
       setCaption('')
+      setActiveWordIdx(-1)
+      if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     }, ms)
   }, [state])
 
@@ -308,24 +325,49 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
         </div>
 
         {/* Caption — below video */}
-        {caption && state === 'speaking' && (
-          <div className="w-full max-w-3xl px-4 py-3">
-            <div className="max-w-2xl mx-auto space-y-1">
-              {caption.split(/(?<=[.!?])\s{2}/).map((sentence, i, arr) => (
-                <p
-                  key={i}
-                  className={`text-center leading-snug transition-all duration-300 ${
-                    i === arr.length - 1
-                      ? 'text-white text-sm font-medium'
-                      : 'text-gray-400 text-xs'
-                  }`}
-                >
-                  {sentence.trim()}
-                </p>
-              ))}
+        {caption && state === 'speaking' && (() => {
+          const sentences = caption.split(/(?<=[.!?])\s{2}/)
+          // Build a flat word list with global indices
+          let globalIdx = 0
+          const sentenceData = sentences.map((s) => {
+            const words = s.trim().split(/\s+/)
+            const start = globalIdx
+            globalIdx += words.length
+            return { words, start }
+          })
+          return (
+            <div className="w-full max-w-3xl px-4 py-3">
+              <div className="max-w-2xl mx-auto space-y-1">
+                {sentenceData.map(({ words, start }, si) => (
+                  <p
+                    key={si}
+                    className={`text-center leading-snug transition-all duration-300 ${
+                      si === sentenceData.length - 1
+                        ? 'text-white text-sm font-medium'
+                        : 'text-gray-400 text-xs'
+                    }`}
+                  >
+                    {words.map((word, wi) => {
+                      const idx = start + wi
+                      const isActive = idx === activeWordIdx
+                      return (
+                        <span
+                          key={wi}
+                          className={isActive
+                            ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
+                            : 'transition-colors duration-100'
+                          }
+                        >
+                          {word}{wi < words.length - 1 ? ' ' : ''}
+                        </span>
+                      )
+                    })}
+                  </p>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Name row */}
         <div className="text-center">

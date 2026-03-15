@@ -24,22 +24,37 @@ interface Props {
 export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState('')
+  const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
   const [errorMsg, setErrorMsg] = useState('')
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const avatarRef = useRef<StreamingAvatar | null>(null)
+  const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Speak ──────────────────────────────────────────────────────────────────
   const speak = useCallback(async (text: string) => {
     if (!avatarRef.current || state === 'connecting') return
     setState('speaking')
     setCaption(text)
+    setActiveWordIdx(0)
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current)
+    const words = text.trim().split(/\s+/)
+    const ms = Math.max(4000, text.length * 55)
+    const msPerWord = ms / words.length
+    wordTimerRef.current = setInterval(() => {
+      setActiveWordIdx((i) => {
+        if (i >= words.length - 1) { clearInterval(wordTimerRef.current!); return i }
+        return i + 1
+      })
+    }, msPerWord)
     try {
       await avatarRef.current.speak({ text, task_type: TaskType.REPEAT })
     } catch (err) {
       console.error('[HeyGen] speak error', err)
       setState('connected')
       setCaption('')
+      setActiveWordIdx(-1)
+      if (wordTimerRef.current) clearInterval(wordTimerRef.current)
     }
   }, [state])
 
@@ -74,6 +89,8 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
       avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
         setState('connected')
         setCaption('')
+        setActiveWordIdx(-1)
+        if (wordTimerRef.current) clearInterval(wordTimerRef.current)
       })
 
       avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
@@ -174,14 +191,29 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Aria', onClose }: Pr
         </div>
 
         {/* Transcript column */}
-        {caption && state === 'speaking' && (
-          <div className="flex-1 max-w-md self-stretch flex flex-col justify-center min-h-0">
-            <div className="overflow-y-auto max-h-[60vh] rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
-              <div className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">Transcript</div>
-              <p className="text-gray-200 text-sm leading-relaxed">{caption}</p>
+        {caption && state === 'speaking' && (() => {
+          const words = caption.trim().split(/\s+/)
+          return (
+            <div className="flex-1 max-w-md self-stretch flex flex-col justify-center min-h-0">
+              <div className="overflow-y-auto max-h-[60vh] rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
+                <div className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">Transcript</div>
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  {words.map((word, wi) => (
+                    <span
+                      key={wi}
+                      className={wi === activeWordIdx
+                        ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
+                        : 'transition-colors duration-100'
+                      }
+                    >
+                      {word}{wi < words.length - 1 ? ' ' : ''}
+                    </span>
+                  ))}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* Controls */}
