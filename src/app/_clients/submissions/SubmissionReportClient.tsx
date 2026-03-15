@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import type { SubmissionWithAnalysis, Pass1Result, Pass6Result } from '@/types'
 import { Badge } from '@/components/ui/Badge'
@@ -7,6 +8,7 @@ import { ProgressRing } from '@/components/ui/ProgressRing'
 import { CriteriaBreakdown } from '@/components/ui/CriteriaBreakdown'
 import { AnalysisPipelineProgress } from './AnalysisPipelineProgress'
 import { AIJudgePanelCard } from '@/app/_clients/judge/AIJudgePanelCard'
+import { AriaStreamingAvatar } from '@/components/ui/AriaStreamingAvatar'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
 interface Props {
@@ -25,13 +27,34 @@ export function SubmissionReportClient({ submission }: Props) {
   // Separate AI judge scores from human judge scores
   const aiJudgeScores = (submission.judge_scores || []).filter((s) => s.judges?.is_ai_judge)
   const aiJudgeName = aiJudgeScores[0] ? (aiJudgeScores[0] as any).judges?.display_name || 'Aria' : 'Aria'
+  const [showAvatar, setShowAvatar] = useState(false)
+  const canHearAria = aiJudgeScores.length > 0 && isReady
 
   return (
+    <>
+      {showAvatar && (
+        <AriaStreamingAvatar
+          submission={submission}
+          judgeName={aiJudgeName}
+          onClose={() => setShowAvatar(false)}
+        />
+      )}
     <div className="min-h-screen bg-[#0a0a0f]">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
-          <div className="label mb-2">Submission Report</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="label">Submission Report</div>
+            {canHearAria && (
+              <button
+                onClick={() => setShowAvatar(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
+                Hear from {aiJudgeName}
+              </button>
+            )}
+          </div>
           <div className="flex items-start gap-4">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{submission.team_name}</h1>
@@ -191,5 +214,6 @@ export function SubmissionReportClient({ submission }: Props) {
         )}
       </div>
     </div>
+    </>
   )
 }
