@@ -24,12 +24,14 @@ export async function runPass6(
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-  const response = await client.messages.create({
+  const stream = await client.messages.stream({
     model: MODELS.OPUS,
     max_tokens: THINKING_BUDGETS.PASS6 + 8192,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGETS.PASS6 },
     messages: [{ role: 'user', content: prompt }],
   } as any)
+
+  const response = await stream.finalMessage()
 
   const thinkingBlock = response.content.find((b: any) => b.type === 'thinking')
   const thinkingSummary = thinkingBlock

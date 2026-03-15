@@ -10,21 +10,23 @@ export async function runPass2(githubUrl: string, pass1: Pass1Result): Promise<P
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-  const response = await client.messages.create({
+  let thinkingSummary = ''
+  let text = '{}'
+
+  const stream = await client.messages.stream({
     model: MODELS.OPUS,
     max_tokens: THINKING_BUDGETS.PASS2 + 4096,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGETS.PASS2 },
     messages: [{ role: 'user', content: prompt }],
   } as any)
 
-  // Extract thinking summary
+  const response = await stream.finalMessage()
+
   const thinkingBlock = response.content.find((b: any) => b.type === 'thinking')
-  const thinkingSummary = thinkingBlock
-    ? (thinkingBlock as any).thinking?.slice(0, 500) || ''
-    : ''
+  thinkingSummary = thinkingBlock ? (thinkingBlock as any).thinking?.slice(0, 500) || '' : ''
 
   const textBlock = response.content.find((b: any) => b.type === 'text')
-  const text = textBlock ? (textBlock as any).text : '{}'
+  text = textBlock ? (textBlock as any).text : '{}'
 
   const result = JSON.parse(text) as Pass2Result
   result.thinking_summary = thinkingSummary
