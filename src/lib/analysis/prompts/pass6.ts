@@ -68,7 +68,21 @@ ${pass5 ? `- Pool rank: #${pass5.pool_rank} of ${pass5.pool_size}
 ${criteriaList}
 
 ## Your synthesis task:
-Using ALL the evidence above, produce a comprehensive final judging report. For each criterion, give a score (0-10) WITH 3-5 sentences of reasoning that references specific evidence from the passes above. Be honest and calibrated — a 7 should be genuinely good, a 5 is average.
+Using ALL the evidence above, produce a comprehensive final judging report. For each criterion, give a score (0-10) WITH 3-5 sentences of reasoning that references specific evidence from the passes above.
+
+**SCORING SCALE — use the full range, do not compress:**
+- **9-10**: Exceptional. Would stand out at any hackathon; professional-grade insight or execution. Reserve for genuinely rare work.
+- **7-8**: Solid, above-average hackathon work. Good but not remarkable. Most decent projects land here — don't inflate beyond this without clear evidence of exceptional quality.
+- **5-6**: Average. Competent execution of a common pattern, or a good idea with notable gaps. A project that is "fine" scores here.
+- **3-4**: Below average. Significant pieces are missing, broken, or superficial.
+- **1-2**: Very basic or largely non-functional. Little evidence of effort in this dimension.
+
+**Critical calibration rules:**
+- Missing or zero-scoring elements (no UI, no screenshots, no demo, 0 commits in window, backend-only with no interface) must pull scores DOWN into the 1-4 range for those criteria — do not soften to a 5 out of sympathy.
+- A project that is a straightforward integration of two APIs with no novel insight scores 4-5 on innovation, not 6-7.
+- Exceptional domain insight, rare low-level engineering, or a solution that would genuinely serve real users scores 8-9 — don't hold back if the evidence is there.
+- Score compression (everything landing 6-8) is a failure mode. If two projects would score the same overall, ask yourself if one is genuinely twice as impressive as the other.
+- The overall_score must reflect weighted reality — do not round up out of encouragement.
 
 Return a JSON object:
 {

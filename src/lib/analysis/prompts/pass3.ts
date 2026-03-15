@@ -40,6 +40,13 @@ ${COMMON_HACKATHON_PATTERNS.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 4. Does the PROBLEM SPACE itself have novelty, or is it a familiar problem?
 5. Is there a combination of ideas here that feels genuinely original?
 
+**Innovation score anchors — use the full range:**
+- 9-10: Genuinely rare combination or insight; a senior engineer would stop and say "I haven't seen that before"
+- 7-8: Solid creative angle, non-obvious tech combination, or real domain insight — above average but not exceptional
+- 5-6: Familiar problem with some differentiation, or a common pattern executed cleanly
+- 3-4: Standard API integration or well-worn pattern with minimal twist
+- 1-2: Direct clone or near-zero original concept
+
 Return a JSON object:
 {
   "innovation_score": number 0-10,
