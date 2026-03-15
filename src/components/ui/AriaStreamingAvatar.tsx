@@ -143,18 +143,8 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
       // 4. Set remote description from D-ID offer
       await pc.setRemoteDescription(new RTCSessionDescription(offer))
 
-      // 5. Create SDP answer
-      const answer = await pc.createAnswer()
-      await pc.setLocalDescription(answer)
-
-      // 6. Send answer to D-ID
-      await fetch('/api/avatar/sdp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stream_id: id, session_id, answer }),
-      })
-
-      // 7. Relay ICE candidates as they arrive
+      // 5. Set up ICE candidate trickling BEFORE setLocalDescription so no
+      //    candidates are missed — D-ID expects trickle ICE
       pc.onicecandidate = async ({ candidate }) => {
         if (!candidate) return
         await fetch('/api/avatar/ice', {
@@ -164,9 +154,21 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
         })
       }
 
+      // 6. Create + set SDP answer (triggers ICE gathering)
+      const answer = await pc.createAnswer()
+      await pc.setLocalDescription(answer)
+
+      // 7. Send the SDP answer to D-ID immediately (trickle ICE — candidates follow separately)
+      await fetch('/api/avatar/sdp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stream_id: id, session_id, answer }),
+      })
+
       // 8. Track connection state
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState
+        console.log('[Aria] connection state:', s)
         if (s === 'connected') {
           setState('connected')
           speak(buildSummaryScript(submission))
@@ -179,7 +181,6 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Aria', onClose }:
         }
       }
 
-      // Surface ICE failures separately so we know if TURN is the issue
       pc.onicecandidateerror = (e) => {
         console.warn('[Aria] ICE candidate error', e)
       }
