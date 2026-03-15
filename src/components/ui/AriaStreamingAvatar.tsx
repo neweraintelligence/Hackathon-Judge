@@ -92,6 +92,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const speakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const wordStartDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const speakGenRef = useRef(0)
 
   // D-ID typically takes ~1.5s from API call to first audio frame
   const D_ID_START_DELAY_MS = 1500
@@ -100,6 +101,9 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const speak = useCallback(async (text: string) => {
     if (state === 'connecting') return
     if (!streamIdRef.current || !sessionIdRef.current) return
+
+    // Increment generation — any in-flight speak() calls will detect they're stale
+    const gen = ++speakGenRef.current
 
     setState('speaking')
     setCaption(text)
@@ -119,12 +123,16 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       }),
     })
 
+    // A newer speak() call was made while we were awaiting — bail out
+    if (gen !== speakGenRef.current) return
+
     const ms = Math.max(4000, text.length * 55)
     const words = text.trim().split(/\s+/)
     const msPerWord = ms / words.length
 
     // Delay highlight start to match when D-ID actually begins speaking
     wordStartDelayRef.current = setTimeout(() => {
+      if (gen !== speakGenRef.current) return
       setActiveWordIdx(0)
       wordTimerRef.current = setInterval(() => {
         setActiveWordIdx((i) => {
@@ -138,6 +146,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
     }, D_ID_START_DELAY_MS)
 
     speakTimerRef.current = setTimeout(() => {
+      if (gen !== speakGenRef.current) return
       setState('connected')
       setCaption('')
       setActiveWordIdx(-1)
