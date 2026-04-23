@@ -1,14 +1,34 @@
 import { NextResponse } from 'next/server'
 
 const DID_API = 'https://api.d-id.com'
-// Amber – black jacket, home office, ElevenLabs voice. Professional + authoritative.
 const PRESENTER_ID = 'v2_public_Amber_BlackJacket_HomeOffice@9WuHtiUDnL'
 
 function didAuth() {
   return 'Basic ' + Buffer.from(process.env.DID_API_KEY!).toString('base64')
 }
 
+let activeStream: { id: string; session_id: string } | null = null
+
+async function destroyStream(streamId: string, sessionId: string) {
+  try {
+    await fetch(`${DID_API}/clips/streams/${streamId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: didAuth(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ session_id: sessionId }),
+    })
+  } catch {}
+}
+
 export async function POST() {
+  // Destroy any orphaned stream from a previous session
+  if (activeStream) {
+    await destroyStream(activeStream.id, activeStream.session_id)
+    activeStream = null
+  }
+
   const res = await fetch(`${DID_API}/clips/streams`, {
     method: 'POST',
     headers: {
@@ -21,8 +41,7 @@ export async function POST() {
   const data = await res.json()
   if (!res.ok) return NextResponse.json(data, { status: res.status })
 
-  // Log ICE servers D-ID returns so we can verify TURN is included
-  console.log('[avatar/start] ice_servers from D-ID:', JSON.stringify(data.ice_servers))
+  activeStream = { id: data.id, session_id: data.session_id }
 
   return NextResponse.json(data)
 }

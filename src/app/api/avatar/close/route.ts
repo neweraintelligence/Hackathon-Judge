@@ -20,3 +20,19 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: res.ok })
 }
+
+// Fallback cleanup endpoint — destroys the stream via GET (for navigator.sendBeacon fallback)
+export async function POST(req: NextRequest) {
+  const { stream_id, session_id } = await req.json()
+
+  const res = await fetch(`${DID_API}/clips/streams/${stream_id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: didAuth(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ session_id }),
+  })
+
+  return NextResponse.json({ ok: res.ok })
+}

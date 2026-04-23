@@ -135,7 +135,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       if (res.ok) {
         const ms = Math.max(4000, text.length * 55)
         const words = text.trim().split(/\s+/)
-        const msPerWord = (ms / words.length) * 0.92 // 8% faster to stay in sync
+        const msPerWord = ms / words.length
 
         wordStartDelayRef.current = setTimeout(() => {
           if (gen !== speakGenRef.current) return
@@ -238,7 +238,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
       setState('error')
       setErrorMsg(msg)
     }
-  }, [submission])
+  }, [speak, submission])
 
   // ── Close stream ───────────────────────────────────────────────────────────
   const close = useCallback(async () => {
