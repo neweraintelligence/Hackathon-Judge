@@ -40,6 +40,14 @@ export async function createEvent(formData: FormData): Promise<{ slug?: string; 
   return { slug }
 }
 
+export async function deleteEvent(eventId: string): Promise<{ error?: string }> {
+  const supabase = createServiceClient()
+  const { error } = await supabase.from('events').delete().eq('id', eventId)
+  if (error) return { error: error.message }
+  revalidatePath('/events')
+  return {}
+}
+
 export async function updateEventCriteria(
   eventId: string,
   criteria: CriterionConfig[]

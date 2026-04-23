@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getEvents } from '@/lib/supabase/queries'
+import { EventRow } from '@/app/_clients/events/EventRow'
 
 export const revalidate = 0
 
@@ -35,26 +36,14 @@ export default async function EventsPage() {
         ) : (
           <div className="space-y-3">
             {events.map((event) => (
-              <Link
+              <EventRow
                 key={event.id}
-                href={`/events/${event.slug}`}
-                className="interactive-card flex items-center justify-between block fade-up"
-              >
-                <div>
-                  <div className="font-semibold text-white mb-0.5">{event.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(event.date + 'T00:00:00Z').toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      timeZone: 'UTC',
-                    })}
-                    {' · '}
-                    <span className="capitalize">{event.judging_mode} mode</span>
-                  </div>
-                </div>
-                <div className="text-gray-500 text-sm">Open</div>
-              </Link>
+                id={event.id}
+                name={event.name}
+                slug={event.slug}
+                date={event.date}
+                judgingMode={event.judging_mode}
+              />
             ))}
           </div>
         )}
