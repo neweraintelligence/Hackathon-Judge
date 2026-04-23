@@ -93,7 +93,7 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
   const speakGenRef = useRef(0)
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const D_ID_START_DELAY_MS = 500
+  const D_ID_START_DELAY_MS = 1500
   const RETRY_INTERVAL_MS = 1500
   const MAX_RETRIES = 12
 
