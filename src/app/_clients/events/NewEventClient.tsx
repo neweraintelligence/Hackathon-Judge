@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createEvent } from '@/lib/actions/events'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
-import { Button } from '@/components/ui/Button'
+import { TopNav } from '@/components/ui/TopNav'
 import type { CriterionConfig } from '@/types'
 
 export function NewEventClient() {
@@ -12,6 +12,7 @@ export function NewEventClient() {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [criteria, setCriteria] = useState<CriterionConfig[]>(DEFAULT_CRITERIA)
+  const [mode, setMode] = useState('rubric')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -31,84 +32,139 @@ export function NewEventClient() {
   const totalWeight = criteria.reduce((s, c) => s + c.weight, 0)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        <Link href="/events" className="text-sm text-gray-500 hover:text-gray-300 transition-colors mb-6 inline-block">
-          ← Events
-        </Link>
-        <h1 className="text-3xl font-bold text-white mb-8">New Event</h1>
+    <>
+      <TopNav
+        actions={
+          <Link href="/events" className="btn-ghost" style={{ fontSize: 12 }}>
+            Events
+          </Link>
+        }
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="card space-y-4">
-            <h2 className="font-semibold text-white">Event Details</h2>
-
-            <div className="space-y-1">
-              <label className="label" htmlFor="name">Event Name</label>
-              <input id="name" name="name" className="input" placeholder="e.g. Hackathon 2025" required />
-            </div>
-
-            <div className="space-y-1">
-              <label className="label" htmlFor="date">Date</label>
-              <input id="date" name="date" type="date" className="input" required />
-            </div>
-
-            <div className="space-y-1">
-              <label className="label" htmlFor="judging_mode">Judging Mode</label>
-              <select id="judging_mode" name="judging_mode" className="input">
-                <option value="rubric">Rubric (sliders per criterion)</option>
-                <option value="pairwise">Pairwise (A vs B comparisons)</option>
-                <option value="hybrid">Hybrid (both)</option>
-              </select>
-            </div>
+      <div style={{ maxWidth: 540, margin: '0 auto', padding: '44px 24px' }}>
+        <div className="anim-fade-up">
+          <div className="label" style={{ marginBottom: 10 }}>
+            <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>← Events</Link>
           </div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6, color: 'var(--text)' }}>
+            New Event
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 30 }}>
+            Set up a new hackathon judging session.
+          </p>
 
-          {/* Criteria editor */}
-          <div className="card space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-white">Judging Criteria</h2>
-              <span className={`text-xs ${Math.abs(totalWeight - 1) > 0.01 ? 'text-red-400' : 'text-green-400'}`}>
-                Total weight: {Math.round(totalWeight * 100)}%
-              </span>
-            </div>
-
-            {criteria.map((c, i) => (
-              <div key={c.key} className="flex items-center gap-3 py-2 border-b border-white/[0.06]">
-                <div className="flex-1">
-                  <div className="text-sm text-white font-medium">{c.label}</div>
-                  <div className="text-xs text-gray-500">{c.description}</div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Basic fields */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {[
+                { label: 'Event Name', name: 'name', placeholder: 'e.g. SF AI Hackathon 2026', type: 'text' },
+                { label: 'Date',       name: 'date', placeholder: '',                           type: 'date' },
+                { label: 'Slug',       name: 'slug', placeholder: 'sf-ai-2026',                 type: 'text' },
+              ].map((f) => (
+                <div key={f.name}>
+                  <div className="label" style={{ marginBottom: 7 }}>{f.label}</div>
                   <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={Math.round(c.weight * 100)}
-                    onChange={(e) => {
-                      const updated = [...criteria]
-                      updated[i] = { ...c, weight: parseInt(e.target.value) / 100 }
-                      setCriteria(updated)
-                    }}
-                    className="w-16 input text-center text-sm py-1"
+                    name={f.name}
+                    type={f.type}
+                    placeholder={f.placeholder}
+                    className="input"
+                    required
                   />
-                  <span className="text-gray-500 text-sm">%</span>
                 </div>
+              ))}
+
+              {/* Judging Mode */}
+              <div>
+                <div className="label" style={{ marginBottom: 9 }}>Judging Mode</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { key: 'rubric',   label: 'Rubric',   sub: 'Score each criterion 1–10' },
+                    { key: 'pairwise', label: 'Pairwise', sub: 'Rank submissions head-to-head' },
+                  ].map((m) => (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => setMode(m.key)}
+                      className="card"
+                      style={{
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        color: 'inherit',
+                        border: `1px solid ${mode === m.key ? 'rgba(61,106,243,0.4)' : 'var(--border)'}`,
+                        background: mode === m.key ? 'rgba(61,106,243,0.07)' : 'var(--surface)',
+                        transition: 'all 0.18s',
+                        padding: '12px 16px',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, color: mode === m.key ? 'var(--accent2)' : 'var(--text)' }}>
+                        {m.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.sub}</div>
+                    </button>
+                  ))}
+                </div>
+                {/* Hidden input for judging_mode */}
+                <input type="hidden" name="judging_mode" value={mode} />
               </div>
-            ))}
-          </div>
+            </div>
 
-          {error && <div className="text-red-400 text-sm">{error}</div>}
+            {/* Criteria editor */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Judging Criteria</div>
+                <span style={{ fontSize: 12, color: Math.abs(totalWeight - 1) > 0.01 ? 'var(--red)' : 'var(--green)' }}>
+                  Total: {Math.round(totalWeight * 100)}%
+                </span>
+              </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" loading={isPending} className="flex-1">
-              Create Event
-            </Button>
-            <Link href="/events">
-              <Button type="button" variant="secondary">Cancel</Button>
-            </Link>
-          </div>
-        </form>
+              {criteria.map((c, i) => (
+                <div key={c.key} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 12, borderBottom: i < criteria.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{c.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{c.description}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={Math.round(c.weight * 100)}
+                      onChange={(e) => {
+                        const updated = [...criteria]
+                        updated[i] = { ...c, weight: parseInt(e.target.value) / 100 }
+                        setCriteria(updated)
+                      }}
+                      className="input"
+                      style={{ width: 60, textAlign: 'center', padding: '6px 8px' }}
+                    />
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {error && (
+              <div style={{ color: 'var(--red)', fontSize: 13 }}>{error}</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={isPending}
+                style={{ flex: 1, justifyContent: 'center', padding: '11px 0', fontSize: 14, opacity: isPending ? 0.7 : 1 }}
+              >
+                {isPending ? 'Creating…' : 'Create Event →'}
+              </button>
+              <Link href="/events" className="btn-secondary">
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -30,7 +30,12 @@
       "WebFetch(domain:docs.liveavatar.com)",
       "WebFetch(domain:npmjs.com)",
       "WebFetch(domain:help.heygen.com)",
-      "WebFetch(domain:elevenlabs.io)"
+      "WebFetch(domain:elevenlabs.io)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python -c ' *)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(git add *)"
     ]
   }
 }

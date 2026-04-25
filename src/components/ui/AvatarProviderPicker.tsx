@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 
 export type AvatarProvider = 'did' | 'heygen'
 
-// D-ID Amber static thumbnail (doesn't expire)
 const DID_THUMBNAIL =
   'https://clips-presenters.d-id.com/v2/Amber_BlackJacket_HomeOffice/9WuHtiUDnL/Sc6QllBjEE/thumbnail.png'
 
@@ -14,116 +13,154 @@ interface Props {
 }
 
 export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
-  const [heygenPreview, setHeygenPreview] = useState<string | null>(null)
   const [heygenName, setHeygenName] = useState('Katya')
   const [hovered, setHovered] = useState<AvatarProvider | null>(null)
+  const [selected, setSelected] = useState<AvatarProvider | null>(null)
 
   useEffect(() => {
     fetch('/api/avatar/heygen/info')
       .then((r) => r.json())
-      .then((d) => {
-        if (d.previewUrl) setHeygenPreview(d.previewUrl)
-        if (d.name) setHeygenName(d.name)
-      })
+      .then((d) => { if (d.name) setHeygenName(d.name) })
       .catch(() => {})
   }, [])
 
-  // Esc to cancel
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onCancel])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-xl mx-4 space-y-5 fade-up">
+  function pick(p: AvatarProvider) {
+    setSelected(p)
+    setTimeout(() => onSelect(p), 260)
+  }
 
+  return (
+    <div className="overlay" onClick={onCancel}>
+      <div
+        className="anim-pop-in"
+        style={{ width: '100%', maxWidth: 640, padding: '0 20px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="text-center">
-          <div className="text-xs font-medium text-purple-300 tracking-widest uppercase mb-2">
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--purple2)', marginBottom: 9 }}>
             Choose Avatar Engine
           </div>
-          <p className="text-gray-500 text-sm">Two live rendering engines, same Avatar Judge intelligence</p>
+          <p style={{ color: 'var(--muted2)', fontSize: 13, lineHeight: 1.5 }}>
+            Two live rendering engines, same Avatar Judge intelligence
+          </p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* D-ID */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+
+          {/* D-ID / Amber */}
           <button
-            onClick={() => onSelect('did')}
+            className={`av-card${selected === 'did' ? ' av-card-selected' : ''}`}
+            style={hovered === 'did' && selected !== 'did' ? {
+              borderColor: 'rgba(124,92,252,0.5)',
+              transform: 'scale(1.022) translateY(-3px)',
+              boxShadow: '0 0 36px rgba(124,92,252,0.13), 0 16px 40px rgba(0,0,0,0.5)',
+            } : {}}
             onMouseEnter={() => setHovered('did')}
             onMouseLeave={() => setHovered(null)}
-            className={`
-              group relative overflow-hidden rounded-2xl border text-left transition-all duration-200
-              ${hovered === 'did'
-                ? 'border-purple-500/60 bg-purple-500/10 scale-[1.02]'
-                : 'border-white/10 bg-white/4 hover:border-white/20'}
-            `}
+            onClick={() => pick('did')}
           >
-            {/* Avatar image */}
-            <div className="aspect-[4/3] overflow-hidden bg-white/5">
+            <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#080810', position: 'relative' }}>
               <img
                 src={DID_THUMBNAIL}
                 alt="Amber"
-                className="w-full h-full object-cover object-top"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
               />
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-white text-sm">Amber</span>
-                <span className="text-xs text-gray-500 border border-white/10 px-1.5 py-0.5 rounded">D-ID</span>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, background: 'linear-gradient(to top, #0d0d12, transparent)' }} />
+              <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 600, color: 'var(--muted2)', letterSpacing: '0.08em' }}>
+                D-ID
               </div>
-              <div className="text-xs text-gray-500 leading-relaxed">
+            </div>
+            <div style={{ padding: '14px 16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>Amber</span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
                 Sub-200ms · ElevenLabs voice · Manual WebRTC
               </div>
             </div>
+            {selected === 'did' && <SelectedOverlay />}
           </button>
 
-          {/* HeyGen */}
+          {/* HeyGen / Katya */}
           <button
-            onClick={() => onSelect('heygen')}
+            className={`av-card${selected === 'heygen' ? ' av-card-selected' : ''}`}
+            style={hovered === 'heygen' && selected !== 'heygen' ? {
+              borderColor: 'rgba(124,92,252,0.5)',
+              transform: 'scale(1.022) translateY(-3px)',
+              boxShadow: '0 0 36px rgba(124,92,252,0.13), 0 16px 40px rgba(0,0,0,0.5)',
+            } : {}}
             onMouseEnter={() => setHovered('heygen')}
             onMouseLeave={() => setHovered(null)}
-            className={`
-              group relative overflow-hidden rounded-2xl border text-left transition-all duration-200
-              ${hovered === 'heygen'
-                ? 'border-purple-500/60 bg-purple-500/10 scale-[1.02]'
-                : 'border-white/10 bg-white/4 hover:border-white/20'}
-            `}
+            onClick={() => pick('heygen')}
           >
-            <div className="aspect-[4/3] overflow-hidden bg-white/5 flex items-center justify-center">
-              {heygenPreview ? (
-                <img
-                  src={heygenPreview}
-                  alt={heygenName}
-                  className="w-full h-full object-contain object-center"
-                />
-              ) : (
-                <div className="text-gray-700 text-4xl">◈</div>
-              )}
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-white text-sm">{heygenName}</span>
-                <span className="text-xs text-gray-500 border border-white/10 px-1.5 py-0.5 rounded">HeyGen</span>
+            <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#07080f', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Cinematic HeyGen placeholder */}
+              <svg width="100%" height="100%" viewBox="0 0 300 225" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <radialGradient id="hgBg" cx="50%" cy="35%" r="65%">
+                    <stop offset="0%" stopColor="#181525" />
+                    <stop offset="100%" stopColor="#07080f" />
+                  </radialGradient>
+                </defs>
+                <rect width="300" height="225" fill="url(#hgBg)" />
+                {[0,1,2,3,4,5,6,7].map((i) => (
+                  <line key={i} x1={i*43} y1="0" x2={i*43} y2="225" stroke="rgba(255,255,255,0.018)" strokeWidth="1" />
+                ))}
+                <ellipse cx="150" cy="85" rx="30" ry="34" fill="rgba(210,215,240,0.1)" />
+                <path d="M88 230 Q150 175 212 230" fill="rgba(210,215,240,0.08)" />
+                <circle cx="150" cy="85" r="38" fill="none" stroke="rgba(61,106,243,0.2)" strokeWidth="1" strokeDasharray="5 4" />
+              </svg>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, background: 'linear-gradient(to top, #07080f, transparent)' }} />
+              <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 600, color: 'var(--muted2)', letterSpacing: '0.08em' }}>
+                HeyGen
               </div>
-              <div className="text-xs text-gray-500 leading-relaxed">
+              <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(25,212,138,0.12)', border: '1px solid rgba(25,212,138,0.25)', borderRadius: 5, padding: '2px 8px', fontSize: 10, fontWeight: 600, color: 'var(--green)' }}>
+                <span className="live-dot" />LIVE
+              </div>
+            </div>
+            <div style={{ padding: '14px 16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{heygenName}</span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
                 LiveKit stream · Custom avatar · SDK managed
               </div>
             </div>
+            {selected === 'heygen' && <SelectedOverlay />}
           </button>
         </div>
 
         {/* Cancel */}
-        <div className="text-center">
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
           <button
             onClick={onCancel}
-            className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: 'var(--muted)', transition: 'color 0.18s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--muted2)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--muted)' }}
           >
             Cancel · Esc
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function SelectedOverlay() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: 'rgba(124,92,252,0.06)', borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+      <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 28px rgba(124,92,252,0.55)' }}>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M3.5 9l4 4 7-8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
     </div>
   )
