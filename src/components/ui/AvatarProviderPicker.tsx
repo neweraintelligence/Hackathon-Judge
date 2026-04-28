@@ -14,13 +14,17 @@ interface Props {
 
 export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
   const [heygenName, setHeygenName] = useState('Katya')
+  const [heygenPreviewUrl, setHeygenPreviewUrl] = useState<string | null>(null)
   const [hovered, setHovered] = useState<AvatarProvider | null>(null)
   const [selected, setSelected] = useState<AvatarProvider | null>(null)
 
   useEffect(() => {
     fetch('/api/avatar/heygen/info')
       .then((r) => r.json())
-      .then((d) => { if (d.name) setHeygenName(d.name) })
+      .then((d) => {
+        if (d.name) setHeygenName(d.name)
+        if (d.previewUrl) setHeygenPreviewUrl(d.previewUrl)
+      })
       .catch(() => {})
   }, [])
 
@@ -102,22 +106,29 @@ export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
             onClick={() => pick('heygen')}
           >
             <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#07080f', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {/* Cinematic HeyGen placeholder */}
-              <svg width="100%" height="100%" viewBox="0 0 300 225" preserveAspectRatio="xMidYMid slice">
-                <defs>
-                  <radialGradient id="hgBg" cx="50%" cy="35%" r="65%">
-                    <stop offset="0%" stopColor="#181525" />
-                    <stop offset="100%" stopColor="#07080f" />
-                  </radialGradient>
-                </defs>
-                <rect width="300" height="225" fill="url(#hgBg)" />
-                {[0,1,2,3,4,5,6,7].map((i) => (
-                  <line key={i} x1={i*43} y1="0" x2={i*43} y2="225" stroke="rgba(255,255,255,0.018)" strokeWidth="1" />
-                ))}
-                <ellipse cx="150" cy="85" rx="30" ry="34" fill="rgba(210,215,240,0.1)" />
-                <path d="M88 230 Q150 175 212 230" fill="rgba(210,215,240,0.08)" />
-                <circle cx="150" cy="85" r="38" fill="none" stroke="rgba(61,106,243,0.2)" strokeWidth="1" strokeDasharray="5 4" />
-              </svg>
+              {heygenPreviewUrl ? (
+                <img
+                  src={heygenPreviewUrl}
+                  alt="Katya"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+                />
+              ) : (
+                <svg width="100%" height="100%" viewBox="0 0 300 225" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <radialGradient id="hgBg" cx="50%" cy="35%" r="65%">
+                      <stop offset="0%" stopColor="#181525" />
+                      <stop offset="100%" stopColor="#07080f" />
+                    </radialGradient>
+                  </defs>
+                  <rect width="300" height="225" fill="url(#hgBg)" />
+                  {[0,1,2,3,4,5,6,7].map((i) => (
+                    <line key={i} x1={i*43} y1="0" x2={i*43} y2="225" stroke="rgba(255,255,255,0.018)" strokeWidth="1" />
+                  ))}
+                  <ellipse cx="150" cy="85" rx="30" ry="34" fill="rgba(210,215,240,0.1)" />
+                  <path d="M88 230 Q150 175 212 230" fill="rgba(210,215,240,0.08)" />
+                  <circle cx="150" cy="85" r="38" fill="none" stroke="rgba(61,106,243,0.2)" strokeWidth="1" strokeDasharray="5 4" />
+                </svg>
+              )}
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, background: 'linear-gradient(to top, #07080f, transparent)' }} />
               <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, padding: '2px 7px', fontSize: 10, fontWeight: 600, color: 'var(--muted2)', letterSpacing: '0.08em' }}>
                 HeyGen
