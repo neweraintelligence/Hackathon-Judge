@@ -169,6 +169,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
               ) : (
                 submissions.map((s, i) => {
                   const st = STATUS_MAP[s.status] || STATUS_MAP.pending
+                  const gh = parseGithubUrl(s.github_url)
                   return (
                     <div
                       key={s.id}
@@ -179,9 +180,14 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: 'var(--text)' }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3, color: 'var(--text)' }}>
                           {s.team_name}
                         </div>
+                        {gh && (
+                          <div style={{ fontSize: 12, color: 'var(--muted2)', marginBottom: 2 }}>
+                            <span style={{ opacity: 0.55 }}>by</span> @{gh.owner} · <span style={{ fontStyle: 'italic' }}>{gh.repo}</span>
+                          </div>
+                        )}
                         <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 380 }}>
                           {s.github_url}
                         </div>
@@ -314,6 +320,14 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
 }
 
 // ─── Inline helpers ───────────────────────────────────────────────────────────
+
+function parseGithubUrl(url: string): { owner: string; repo: string } | null {
+  try {
+    const parts = new URL(url).pathname.split('/').filter(Boolean)
+    if (parts.length >= 2) return { owner: parts[0], repo: parts[1] }
+  } catch {}
+  return null
+}
 
 function AnalyzingSpinner() {
   return (
