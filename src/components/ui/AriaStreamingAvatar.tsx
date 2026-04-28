@@ -14,6 +14,11 @@ function ensurePeriod(s: string): string {
   return s.trim().replace(/[.!?]?\s*$/, '.')
 }
 
+// Split a multi-sentence string into paragraphs (breaks after ". " before a capital letter)
+function addParagraphBreaks(text: string): string {
+  return text.trim().replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n')
+}
+
 function buildSummaryScript(submission: SubmissionWithAnalysis): string {
   const pass6 = submission.ai_analyses.find(
     (a) => a.pass_name === 'pass6_synthesis'
@@ -23,26 +28,26 @@ function buildSummaryScript(submission: SubmissionWithAnalysis): string {
     return `I haven't finished my analysis of ${submission.team_name} yet. Check back when the pipeline completes.`
   }
 
-  const sentences: string[] = []
+  const paragraphs: string[] = []
 
-  sentences.push(`Here's my read on ${submission.team_name}.`)
+  paragraphs.push(`Here's my read on ${submission.team_name}.`)
 
   if (pass6.most_impressive_aspect) {
-    sentences.push(ensurePeriod(pass6.most_impressive_aspect))
+    paragraphs.push(ensurePeriod(pass6.most_impressive_aspect))
   }
 
   if (pass6.judge_briefing_points?.length > 0) {
-    sentences.push(`For the panel — ${ensurePeriod(pass6.judge_briefing_points[0])}`)
+    paragraphs.push(`For the panel — ${ensurePeriod(pass6.judge_briefing_points[0])}`)
     if (pass6.judge_briefing_points[1]) {
-      sentences.push(ensurePeriod(pass6.judge_briefing_points[1]))
+      paragraphs.push(ensurePeriod(pass6.judge_briefing_points[1]))
     }
   }
 
   if (pass6.concerns_and_limitations?.length > 0) {
-    sentences.push(`Worth probing: ${ensurePeriod(pass6.concerns_and_limitations[0])}`)
+    paragraphs.push(`Worth probing: ${ensurePeriod(pass6.concerns_and_limitations[0])}`)
   }
 
-  return sentences.join('  ')
+  return paragraphs.join('\n\n')
 }
 
 function buildCriterionScript(
@@ -53,13 +58,13 @@ function buildCriterionScript(
     (s: JudgeScoreWithJudge) =>
       s.criteria_key === criteriaKey && s.judges?.is_ai_judge
   )
-  if (aiScore?.comment) return ensurePeriod(aiScore.comment)
+  if (aiScore?.comment) return addParagraphBreaks(ensurePeriod(aiScore.comment))
 
   const pass6 = submission.ai_analyses.find(
     (a) => a.pass_name === 'pass6_synthesis'
   )?.result as Pass6Result | null
   const score = pass6?.criteria_scores?.find((s) => s.criteria_key === criteriaKey)
-  if (score?.reasoning) return ensurePeriod(score.reasoning)
+  if (score?.reasoning) return addParagraphBreaks(ensurePeriod(score.reasoning))
 
   return `I don't have a specific assessment for this criterion yet.`
 }
@@ -349,24 +354,35 @@ export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', on
 
         {/* Transcript column */}
         {caption && state === 'speaking' && (() => {
-          const words = caption.trim().split(/\s+/)
+          let offset = 0
+          const paragraphData = caption.split('\n\n').filter(s => s.trim()).map(para => {
+            const words = para.trim().split(/\s+/).filter(Boolean)
+            const startIdx = offset
+            offset += words.length
+            return { words, startIdx }
+          })
           return (
             <div className="flex-1 max-w-md self-stretch flex flex-col justify-center min-h-0">
               <div className="overflow-y-auto max-h-[60vh] rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
                 <div className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">Transcript</div>
-                <p className="text-gray-200 text-sm leading-relaxed">
-                  {words.map((word, wi) => (
-                    <span
-                      key={wi}
-                      className={wi === activeWordIdx
-                        ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
-                        : 'transition-colors duration-100'
-                      }
-                    >
-                      {word}{wi < words.length - 1 ? ' ' : ''}
-                    </span>
-                  ))}
-                </p>
+                {paragraphData.map(({ words, startIdx }, pi) => (
+                  <p key={pi} className="text-gray-200 text-sm leading-relaxed mb-3 last:mb-0">
+                    {words.map((word, wi) => {
+                      const globalIdx = startIdx + wi
+                      return (
+                        <span
+                          key={wi}
+                          className={globalIdx === activeWordIdx
+                            ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)] transition-colors duration-100'
+                            : 'transition-colors duration-100'
+                          }
+                        >
+                          {word}{wi < words.length - 1 ? ' ' : ''}
+                        </span>
+                      )
+                    })}
+                  </p>
+                ))}
               </div>
             </div>
           )
