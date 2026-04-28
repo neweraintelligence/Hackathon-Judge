@@ -93,6 +93,17 @@ export function SubmissionReportClient({ submission, aiJudgeName: aiJudgeNamePro
               <h1 style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 12, color: 'var(--text)' }}>
                 {submission.team_name}
               </h1>
+              {(() => {
+                const parts = (() => { try { const p = new URL(submission.github_url).pathname.split('/').filter(Boolean); return p.length >= 2 ? { owner: p[0], repo: p[1] } : null } catch { return null } })()
+                return parts ? (
+                  <div style={{ fontSize: 13, color: 'var(--muted2)', marginBottom: 10 }}>
+                    <span style={{ opacity: 0.5 }}>by</span>{' '}
+                    <span style={{ color: 'var(--text)', fontWeight: 500 }}>@{parts.owner}</span>
+                    <span style={{ opacity: 0.35, margin: '0 6px' }}>·</span>
+                    <span style={{ fontStyle: 'italic' }}>{parts.repo}</span>
+                  </div>
+                ) : null
+              })()}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center' }}>
                 <a
                   href={submission.github_url}
