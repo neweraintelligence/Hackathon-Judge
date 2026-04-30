@@ -9,8 +9,8 @@ import { ProgressRing } from '@/components/ui/ProgressRing'
 import { CriteriaBreakdown } from '@/components/ui/CriteriaBreakdown'
 import { AnalysisPipelineProgress } from './AnalysisPipelineProgress'
 import { AIJudgePanelCard } from '@/app/_clients/judge/AIJudgePanelCard'
-import { AriaStreamingAvatar } from '@/components/ui/AriaStreamingAvatar'
-import { HeyGenAriaAvatar } from '@/components/ui/HeyGenAriaAvatar'
+import { StreamingAvatar } from '@/components/ui/StreamingAvatar'
+import { HeyGenAvatar } from '@/components/ui/HeyGenAvatar'
 import { AvatarProviderPicker, type AvatarProvider } from '@/components/ui/AvatarProviderPicker'
 import { TopNav } from '@/components/ui/TopNav'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
@@ -45,14 +45,14 @@ export function SubmissionReportClient({ submission, aiJudgeName: aiJudgeNamePro
         />
       )}
       {avatarProvider === 'did' && (
-        <AriaStreamingAvatar
+        <StreamingAvatar
           submission={submission}
           judgeName={aiJudgeName}
           onClose={() => setAvatarProvider(null)}
         />
       )}
       {avatarProvider === 'heygen' && (
-        <HeyGenAriaAvatar
+        <HeyGenAvatar
           submission={submission}
           judgeName={aiJudgeName}
           onClose={() => setAvatarProvider(null)}

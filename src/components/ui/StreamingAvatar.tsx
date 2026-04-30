@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { SubmissionWithAnalysis, Pass6Result, JudgeScoreWithJudge } from '@/types'
 import { DEFAULT_CRITERIA } from '@/lib/constants/criteria'
 
-// ─── Avatar Judge presenter assets (Amber – black jacket, home office) ──────────────
 const IDLE_VIDEO =
   'https://clips-presenters.d-id.com/v2/Amber_BlackJacket_HomeOffice/9WuHtiUDnL/Sc6QllBjEE/idle.mp4'
 
@@ -14,7 +13,6 @@ function ensurePeriod(s: string): string {
   return s.trim().replace(/[.!?]?\s*$/, '.')
 }
 
-// Split a multi-sentence string into paragraphs (breaks after ". " before a capital letter)
 function addParagraphBreaks(text: string): string {
   return text.trim().replace(/([.!?])\s+(?=[A-Z])/g, '$1\n\n')
 }
@@ -81,7 +79,7 @@ interface Props {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function AriaStreamingAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
+export function StreamingAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState<string>('')
   const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)

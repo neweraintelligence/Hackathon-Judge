@@ -5,8 +5,8 @@ import type { Event, SubmissionWithAnalysis } from '@/types'
 import { AIReportPanel } from './AIReportPanel'
 import { RubricPanel } from './RubricPanel'
 import { PillTabs } from '@/components/ui/PillTabs'
-import { AriaStreamingAvatar } from '@/components/ui/AriaStreamingAvatar'
-import { HeyGenAriaAvatar } from '@/components/ui/HeyGenAriaAvatar'
+import { StreamingAvatar } from '@/components/ui/StreamingAvatar'
+import { HeyGenAvatar } from '@/components/ui/HeyGenAvatar'
 import { AvatarProviderPicker, type AvatarProvider } from '@/components/ui/AvatarProviderPicker'
 
 interface Props {
@@ -38,14 +38,14 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
         />
       )}
       {avatarProvider === 'did' && (
-        <AriaStreamingAvatar
+        <StreamingAvatar
           submission={submission}
           judgeName={event.ai_judge_name || 'Avatar Judge'}
           onClose={() => setAvatarProvider(null)}
         />
       )}
       {avatarProvider === 'heygen' && (
-        <HeyGenAriaAvatar
+        <HeyGenAvatar
           submission={submission}
           judgeName={event.ai_judge_name || 'Avatar Judge'}
           onClose={() => setAvatarProvider(null)}

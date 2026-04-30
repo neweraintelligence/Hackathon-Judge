@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import StreamingAvatar, {
+import StreamingAvatarSDK, {
   AvatarQuality,
   StreamingEvents,
   TaskType,
@@ -21,14 +21,14 @@ interface Props {
   onClose: () => void
 }
 
-export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
+export function HeyGenAvatar({ submission, judgeName = 'Avatar Judge', onClose }: Props) {
   const [state, setState] = useState<AvatarState>('idle')
   const [caption, setCaption] = useState('')
   const [activeWordIdx, setActiveWordIdx] = useState<number>(-1)
   const [errorMsg, setErrorMsg] = useState('')
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const avatarRef = useRef<StreamingAvatar | null>(null)
+  const avatarRef = useRef<StreamingAvatarSDK | null>(null)
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pendingWordsRef = useRef<{ words: string[]; msPerWord: number } | null>(null)
 
@@ -61,28 +61,24 @@ export function HeyGenAriaAvatar({ submission, judgeName = 'Avatar Judge', onClo
     setState('connecting')
     setErrorMsg('')
     try {
-      // Get session token from our server proxy
       const res = await fetch('/api/avatar/heygen/token', { method: 'POST' })
       if (!res.ok) throw new Error('Failed to get HeyGen session token')
       const { token } = await res.json()
 
-      const avatar = new StreamingAvatar({ token })
+      const avatar = new StreamingAvatarSDK({ token })
       avatarRef.current = avatar
 
-      // Stream ready → bind to video element
       avatar.on(StreamingEvents.STREAM_READY, (event: any) => {
         if (videoRef.current && event.detail) {
           videoRef.current.srcObject = event.detail
           videoRef.current.play().catch(() => {})
         }
         setState('connected')
-        // Auto-speak summary on connect
         speak(buildSummaryScript(submission))
       })
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
         setState('speaking')
-        // Start word highlight timer now that audio is actually playing
         if (pendingWordsRef.current) {
           const { words, msPerWord } = pendingWordsRef.current
           pendingWordsRef.current = null
