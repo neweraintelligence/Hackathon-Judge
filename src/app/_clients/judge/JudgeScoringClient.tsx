@@ -20,8 +20,8 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
   const [showPicker, setShowPicker] = useState(false)
   const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
 
-  const analysisReady = submission.ai_analyses.some(
-    (a) => a.pass_name === 'pass6_synthesis' && a.status === 'complete'
+  const canHearAvatarJudge = submission.status === 'ready' && submission.ai_analyses.some(
+    (a) => a.pass_name === 'pass6_synthesis' && a.result
   )
 
   const tabs = [
@@ -70,7 +70,7 @@ export function JudgeScoringClient({ event, submission, judgeId }: Props) {
             </div>
 
             <div className="flex items-center gap-3">
-              {event.ai_judge_enabled && analysisReady && (
+              {canHearAvatarJudge && (
                 <button
                   onClick={() => setShowPicker(true)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 hover:bg-purple-600/35 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all"

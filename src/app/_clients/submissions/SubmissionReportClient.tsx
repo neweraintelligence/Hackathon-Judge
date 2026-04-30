@@ -34,7 +34,7 @@ export function SubmissionReportClient({ submission, aiJudgeName: aiJudgeNamePro
   const aiJudgeName = aiJudgeNameProp || 'Avatar Judge'
   const [showPicker, setShowPicker] = useState(false)
   const [avatarProvider, setAvatarProvider] = useState<AvatarProvider | null>(null)
-  const canHearAvatarJudge = aiJudgeScores.length > 0 && isReady
+  const canHearAvatarJudge = Boolean(pass6) && isReady
 
   return (
     <>
