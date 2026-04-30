@@ -8,6 +8,10 @@ interface PoolEntry {
   pass3: Pass3Result
 }
 
+function list(values: unknown): string {
+  return Array.isArray(values) && values.length > 0 ? values.join(', ') : 'none'
+}
+
 export function buildPass5Prompt(
   targetId: string,
   targetTeamName: string,
@@ -16,13 +20,13 @@ export function buildPass5Prompt(
   const poolSummary = poolEntries
     .map(
       (e) => `## ${e.teamName} (id: ${e.submissionId})
-- Tech: ${e.pass1.tech_stack.join(', ')}
+- Tech: ${list(e.pass1.tech_stack)}
 - Innovation score: ${e.pass3.innovation_score}/10
 - Surprise factor: ${e.pass3.senior_engineer_surprise_factor}
 - Technical score: ${e.pass2.technical_score_raw}/10
 - Functional score: ${e.pass2.functional_score_raw}/10
 - Template: ${e.pass1.template_detected || 'none'}
-- Common patterns: ${e.pass3.common_pattern_matches.join(', ') || 'none'}`
+- Common patterns: ${list(e.pass3.common_pattern_matches)}`
     )
     .join('\n\n')
 

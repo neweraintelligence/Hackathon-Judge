@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
+    if (submission.status === 'analyzing') {
+      return NextResponse.json({ ok: true, message: 'Analysis already running' }, { status: 202 })
+    }
+
     const screenshotUrls = (submission.submission_media || [])
       .filter((m: any) => m.type === 'screenshot')
       .sort((a: any, b: any) => a.sort_order - b.sort_order)
@@ -39,6 +43,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, message: 'Analysis pipeline started' })
   } catch (error: any) {
+    console.error('[analysis/start] Analysis request failed:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

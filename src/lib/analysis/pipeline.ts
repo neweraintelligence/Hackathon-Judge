@@ -8,6 +8,10 @@ import { runPass6 } from './passes/pass6'
 import { ensureAIJudge, submitAIJudgeScores } from '@/lib/ai-judge/submit-scores'
 import type { PassName, CriterionConfig, Pass1Result, Pass2Result, Pass3Result } from '@/types'
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 async function savePassResult(
   submissionId: string,
   passName: PassName,
@@ -24,6 +28,7 @@ async function savePassResult(
       result,
       thinking_tokens: thinkingTokens || null,
       status: 'complete',
+      error: null,
     },
     { onConflict: 'submission_id,pass_name' }
   )
@@ -38,6 +43,22 @@ async function setPassStatus(submissionId: string, passName: PassName, status: s
       model_used: '',
       status,
       result: null,
+      error: null,
+    },
+    { onConflict: 'submission_id,pass_name' }
+  )
+}
+
+async function setPassError(submissionId: string, passName: PassName, error: unknown) {
+  const supabase = createServiceClient()
+  await supabase.from('ai_analyses').upsert(
+    {
+      submission_id: submissionId,
+      pass_name: passName,
+      model_used: '',
+      status: 'error',
+      result: null,
+      error: getErrorMessage(error),
     },
     { onConflict: 'submission_id,pass_name' }
   )
@@ -88,6 +109,7 @@ export async function runFullPipeline(
   screenshotUrls: string[] = []
 ) {
   const supabase = createServiceClient()
+  let currentPass: PassName | null = null
 
   // Update submission status
   await supabase
@@ -97,37 +119,42 @@ export async function runFullPipeline(
 
   try {
     // Pass 1 — Repo Archaeology
+    currentPass = 'pass1_repo_archaeology'
     console.log(`[pipeline] ${submissionId} starting pass1`)
-    await setPassStatus(submissionId, 'pass1_repo_archaeology', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     const pass1 = await runPass1(githubUrl)
-    await savePassResult(submissionId, 'pass1_repo_archaeology', 'claude-sonnet-4-6', pass1)
+    await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass1)
     console.log(`[pipeline] ${submissionId} pass1 done`)
 
     // Pass 2 — Code Deep Dive
+    currentPass = 'pass2_code_deep_dive'
     console.log(`[pipeline] ${submissionId} starting pass2`)
-    await setPassStatus(submissionId, 'pass2_code_deep_dive', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     const pass2 = await runPass2(githubUrl, pass1)
-    await savePassResult(submissionId, 'pass2_code_deep_dive', 'claude-sonnet-4-6', pass2)
+    await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass2)
     console.log(`[pipeline] ${submissionId} pass2 done`)
 
     // Pass 3 — Innovation Audit
+    currentPass = 'pass3_innovation_audit'
     console.log(`[pipeline] ${submissionId} starting pass3`)
-    await setPassStatus(submissionId, 'pass3_innovation_audit', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     const pass3 = await runPass3(pass1, pass2)
-    await savePassResult(submissionId, 'pass3_innovation_audit', 'claude-sonnet-4-6', pass3)
+    await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass3)
     console.log(`[pipeline] ${submissionId} pass3 done`)
 
     // Pass 4 — Visual/UX (only if screenshots exist)
+    currentPass = 'pass4_visual_ux'
     console.log(`[pipeline] ${submissionId} starting pass4`)
     let pass4 = null
-    await setPassStatus(submissionId, 'pass4_visual_ux', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     pass4 = await runPass4(screenshotUrls)
-    await savePassResult(submissionId, 'pass4_visual_ux', 'claude-sonnet-4-6', pass4)
+    await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass4)
     console.log(`[pipeline] ${submissionId} pass4 done`)
 
     // Pass 5 — Pool Comparison (fetch pool from DB)
+    currentPass = 'pass5_pool_comparison'
     console.log(`[pipeline] ${submissionId} starting pass5`)
-    await setPassStatus(submissionId, 'pass5_pool_comparison', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     const { data: poolData } = await supabase
       .from('ai_analyses')
       .select(`
@@ -158,14 +185,15 @@ export async function runFullPipeline(
     }))
 
     const pass5 = await runPass5(submissionId, teamName, pool)
-    await savePassResult(submissionId, 'pass5_pool_comparison', 'claude-sonnet-4-6', pass5)
+    await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass5)
     console.log(`[pipeline] ${submissionId} pass5 done`)
 
     // Pass 6 — Synthesis
+    currentPass = 'pass6_synthesis'
     console.log(`[pipeline] ${submissionId} starting pass6`)
-    await setPassStatus(submissionId, 'pass6_synthesis', 'running')
+    await setPassStatus(submissionId, currentPass, 'running')
     const pass6 = await runPass6(teamName, criteria, pass1, pass2, pass3, pass4, pass5)
-    await savePassResult(submissionId, 'pass6_synthesis', 'claude-opus-4-6', pass6)
+    await savePassResult(submissionId, currentPass, 'claude-opus-4-6', pass6)
     console.log(`[pipeline] ${submissionId} pass6 done`)
 
     // Save ai_scores from pass6
@@ -209,6 +237,10 @@ export async function runFullPipeline(
       .eq('id', submissionId)
 
   } catch (error) {
+    console.error(`[pipeline] ${submissionId} failed${currentPass ? ` at ${currentPass}` : ''}:`, error)
+    if (currentPass) {
+      await setPassError(submissionId, currentPass, error)
+    }
     await supabase
       .from('submissions')
       .update({ status: 'error' })
