@@ -110,7 +110,7 @@ export function AvatarProviderPicker({ onSelect, onCancel }: Props) {
                 <img
                   src={heygenPreviewUrl}
                   alt="Katya"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center top', padding: 10 }}
                 />
               ) : (
                 <svg width="100%" height="100%" viewBox="0 0 300 225" preserveAspectRatio="xMidYMid slice">
