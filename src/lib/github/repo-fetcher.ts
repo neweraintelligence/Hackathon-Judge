@@ -16,6 +16,8 @@ const BOILERPLATE_FILES = new Set([
 ])
 
 const INTERESTING_DIRS = ['src/', 'lib/', 'app/', 'components/', 'api/', 'utils/', 'hooks/', 'services/']
+const SOURCE_EXTENSIONS = new Set(['ts', 'tsx', 'js', 'jsx', 'py', 'go', 'rs', 'swift', 'kt', 'html'])
+const PUBLIC_ENTRYPOINTS = new Set(['public/index.html'])
 
 export interface RepoData {
   is_forked: boolean
@@ -99,8 +101,12 @@ export async function fetchRepoData(githubUrl: string, hackathonDate?: string): 
     .filter((f) => {
       if (BOILERPLATE_FILES.has(f.split('/').pop()!)) return false
       const ext = f.split('.').pop()
-      if (!['ts', 'tsx', 'js', 'jsx', 'py', 'go', 'rs', 'swift', 'kt'].includes(ext || '')) return false
-      return INTERESTING_DIRS.some((d) => f.startsWith(d))
+      if (!SOURCE_EXTENSIONS.has(ext || '')) return false
+      return (
+        INTERESTING_DIRS.some((d) => f.startsWith(d)) ||
+        !f.includes('/') ||
+        PUBLIC_ENTRYPOINTS.has(f)
+      )
     })
     .slice(0, 15)
 
