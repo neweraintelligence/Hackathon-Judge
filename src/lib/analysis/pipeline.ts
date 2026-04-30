@@ -82,9 +82,7 @@ async function saveAIScores(submissionId: string, pass6Result: any) {
 async function savePoolScore(
   submissionId: string,
   eventId: string,
-  overallScore: number,
-  poolRank: number,
-  percentile: number
+  overallScore: number
 ) {
   const supabase = createServiceClient()
   await supabase.from('pool_scores').upsert(
@@ -92,12 +90,54 @@ async function savePoolScore(
       submission_id: submissionId,
       event_id: eventId,
       overall_score: overallScore,
-      pool_rank: poolRank,
-      percentile,
+      pool_rank: 1,
+      percentile: 100,
       computed_at: new Date().toISOString(),
     },
     { onConflict: 'submission_id' }
   )
+
+  await recomputePoolScoreRanks(eventId)
+}
+
+async function recomputePoolScoreRanks(eventId: string) {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('pool_scores')
+    .select('submission_id, overall_score')
+    .eq('event_id', eventId)
+
+  if (error) throw error
+
+  const scores = (data || [])
+    .map((row) => ({
+      submissionId: row.submission_id as string,
+      overallScore: Number(row.overall_score),
+    }))
+    .filter((row) => Number.isFinite(row.overallScore))
+
+  if (scores.length === 0) return
+
+  const updates = scores.map((row) => {
+    const betterCount = scores.filter((other) => other.overallScore > row.overallScore).length
+
+    return {
+      submission_id: row.submissionId,
+      event_id: eventId,
+      overall_score: row.overallScore,
+      pool_rank: betterCount + 1,
+      percentile: scores.length > 1
+        ? Math.round(((scores.length - betterCount - 1) / (scores.length - 1)) * 100)
+        : 100,
+      computed_at: new Date().toISOString(),
+    }
+  })
+
+  const { error: upsertError } = await supabase
+    .from('pool_scores')
+    .upsert(updates, { onConflict: 'submission_id' })
+
+  if (upsertError) throw upsertError
 }
 
 export async function runFullPipeline(
@@ -184,7 +224,10 @@ export async function runFullPipeline(
       pass3: e.pass3_innovation_audit as Pass3Result,
     }))
 
-    const pass5 = await runPass5(submissionId, teamName, pool)
+    const pass5 = await runPass5(
+      { submissionId, teamName, pass1, pass2, pass3 },
+      pool
+    )
     await savePassResult(submissionId, currentPass, 'claude-sonnet-4-6', pass5)
     console.log(`[pipeline] ${submissionId} pass5 done`)
 
@@ -225,9 +268,7 @@ export async function runFullPipeline(
     await savePoolScore(
       submissionId,
       eventId,
-      pass6.overall_score,
-      pass5.pool_rank,
-      pass5.percentile
+      pass6.overall_score
     )
 
     // Mark submission ready

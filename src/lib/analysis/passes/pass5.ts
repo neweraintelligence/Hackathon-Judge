@@ -52,8 +52,7 @@ function fallbackPass5(poolSize: number, reason: string): Pass5Result {
 }
 
 export async function runPass5(
-  targetId: string,
-  targetTeamName: string,
+  target: PoolEntry,
   pool: PoolEntry[]
 ): Promise<Pass5Result> {
   if (pool.length < 3) {
@@ -68,7 +67,7 @@ export async function runPass5(
     }
   }
 
-  const prompt = buildPass5Prompt(targetId, targetTeamName, pool)
+  const prompt = buildPass5Prompt(target, pool)
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -87,7 +86,7 @@ export async function runPass5(
         continue
       }
 
-      console.error(`[pipeline] ${targetId} pass5 comparison failed:`, error)
+      console.error(`[pipeline] ${target.submissionId} pass5 comparison failed:`, error)
       return fallbackPass5(pool.length, error instanceof Error ? error.message : 'the AI comparison service failed')
     }
   }

@@ -13,13 +13,10 @@ function list(values: unknown): string {
 }
 
 export function buildPass5Prompt(
-  targetId: string,
-  targetTeamName: string,
+  target: PoolEntry,
   poolEntries: PoolEntry[]
 ): string {
-  const poolSummary = poolEntries
-    .map(
-      (e) => `## ${e.teamName} (id: ${e.submissionId})
+  const describe = (e: PoolEntry) => `## ${e.teamName} (id: ${e.submissionId})
 - Tech: ${list(e.pass1.tech_stack)}
 - Innovation score: ${e.pass3.innovation_score}/10
 - Surprise factor: ${e.pass3.senior_engineer_surprise_factor}
@@ -27,18 +24,21 @@ export function buildPass5Prompt(
 - Functional score: ${e.pass2.functional_score_raw}/10
 - Template: ${e.pass1.template_detected || 'none'}
 - Common patterns: ${list(e.pass3.common_pattern_matches)}`
-    )
+
+  const poolSummary = poolEntries
+    .map(describe)
     .join('\n\n')
 
   return `You are comparing a hackathon submission against the rest of the submission pool to provide relative rankings.
 
-## Target Submission: ${targetTeamName} (id: ${targetId})
+## Target Submission:
+${describe(target)}
 
-## Full Pool (${poolEntries.length} submissions):
+## Comparison Pool (${poolEntries.length} other submissions):
 ${poolSummary}
 
 ## Task:
-1. Where does ${targetTeamName} rank in this pool across key dimensions?
+1. Where does ${target.teamName} rank in this pool across key dimensions?
 2. What does it outperform the pool on?
 3. What does it underperform the pool on?
 4. What is its approximate percentile?
