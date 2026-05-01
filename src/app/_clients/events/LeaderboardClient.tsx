@@ -1,19 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { LeaderboardEntry } from '@/types'
+import type { JudgingMode, LeaderboardEntry } from '@/types'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 
 interface Props {
   eventId: string
   initialLeaderboard: LeaderboardEntry[]
+  judgingMode?: JudgingMode
 }
 
-export function LeaderboardClient({ eventId, initialLeaderboard }: Props) {
+export function LeaderboardClient({ eventId, initialLeaderboard, judgingMode }: Props) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>(initialLeaderboard)
+  const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
+
+    if (judgingMode === 'pairwise') {
+      const channel = supabase
+        .channel(`pairwise_comparisons:${eventId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'pairwise_comparisons' },
+          () => { router.refresh() }
+        )
+        .subscribe()
+      return () => { supabase.removeChannel(channel) }
+    }
 
     const channel = supabase
       .channel(`pool_scores:${eventId}`)
@@ -21,7 +36,6 @@ export function LeaderboardClient({ eventId, initialLeaderboard }: Props) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'pool_scores' },
         () => {
-          // Refetch on any change
           supabase
             .from('pool_scores')
             .select('submission_id, overall_score, pool_rank, percentile, submissions!inner(team_name, event_id)')
@@ -46,12 +60,19 @@ export function LeaderboardClient({ eventId, initialLeaderboard }: Props) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [eventId])
+  }, [eventId, judgingMode, router])
+
+  // Sync when server re-renders (pairwise router.refresh path)
+  useEffect(() => {
+    setEntries(initialLeaderboard)
+  }, [initialLeaderboard])
 
   if (entries.length === 0) {
     return (
       <div className="card text-center py-16 text-gray-500">
-        No scores yet — waiting for analysis to complete
+        {judgingMode === 'pairwise'
+          ? 'No comparisons yet — judges need to start comparing'
+          : 'No scores yet — waiting for analysis to complete'}
       </div>
     )
   }
@@ -80,7 +101,9 @@ export function LeaderboardClient({ eventId, initialLeaderboard }: Props) {
           <div className="flex-1">
             <div className="font-semibold text-white">{entry.team_name}</div>
             <div className="text-xs text-gray-500">
-              {entry.percentile}th percentile
+              {judgingMode === 'pairwise'
+                ? `${entry.judge_score_count} comparison${entry.judge_score_count !== 1 ? 's' : ''}`
+                : `${entry.percentile}th percentile`}
             </div>
           </div>
 

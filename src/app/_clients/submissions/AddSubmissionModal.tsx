@@ -11,6 +11,12 @@ interface Props {
 
 const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime'
 const MAX_FILES = 8
+const MAX_FILE_SIZE_MB = 10
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+function fileKey(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`
+}
 
 export function AddSubmissionModal({ eventId, onClose }: Props) {
   const router = useRouter()
@@ -24,11 +30,43 @@ export function AddSubmissionModal({ eventId, onClose }: Props) {
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return
-    const valid = Array.from(incoming).filter(
-      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
-    )
-    setMediaFiles((prev) => [...prev, ...valid].slice(0, MAX_FILES))
-  }, [])
+    const incomingFiles = Array.from(incoming)
+    const accepted: File[] = []
+    let skipped = 0
+
+    for (const file of incomingFiles) {
+      const isSupportedType = file.type.startsWith('image/') || file.type.startsWith('video/')
+      const isSupportedSize = file.size <= MAX_FILE_SIZE_BYTES
+
+      if (isSupportedType && isSupportedSize) {
+        accepted.push(file)
+      } else {
+        skipped += 1
+      }
+    }
+
+    const existing = new Set(mediaFiles.map(fileKey))
+    const merged = [...mediaFiles]
+
+    for (const file of accepted) {
+      if (merged.length >= MAX_FILES) {
+        skipped += 1
+        continue
+      }
+      if (!existing.has(fileKey(file))) {
+        existing.add(fileKey(file))
+        merged.push(file)
+      }
+    }
+
+    setMediaFiles(merged)
+
+    if (skipped > 0) {
+      setError(`Skipped ${skipped} file${skipped === 1 ? '' : 's'}. Use supported media under ${MAX_FILE_SIZE_MB}MB, up to ${MAX_FILES} files total.`)
+    } else {
+      setError(null)
+    }
+  }, [mediaFiles])
 
   const removeFile = (idx: number) =>
     setMediaFiles((prev) => prev.filter((_, i) => i !== idx))
@@ -141,16 +179,19 @@ export function AddSubmissionModal({ eventId, onClose }: Props) {
               `}
             >
               <p className="text-sm text-gray-400">
-                Drop files here, or <span className="text-purple-400">browse</span>
+                Drop one or more files here, or <span className="text-purple-400">browse</span>
               </p>
-              <p className="text-xs text-gray-600 mt-1">PNG · JPG · WebP · MP4 · WebM · up to {MAX_FILES} files</p>
+              <p className="text-xs text-gray-600 mt-1">PNG · JPG · WebP · GIF · MP4 · WebM · up to {MAX_FILE_SIZE_MB}MB each</p>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept={ACCEPT}
                 multiple
                 className="hidden"
-                onChange={(e) => addFiles(e.target.files)}
+                onChange={(e) => {
+                  addFiles(e.target.files)
+                  e.currentTarget.value = ''
+                }}
               />
             </div>
 

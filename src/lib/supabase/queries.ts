@@ -1,4 +1,5 @@
 import { createClient, createServiceClient } from './server'
+import { computeRankings } from '@/lib/algorithms/crowd-bt'
 import type {
   Event,
   Submission,
@@ -7,6 +8,7 @@ import type {
   AIAnalysis,
   PoolScore,
   LeaderboardEntry,
+  PairwiseComparison,
 } from '@/types'
 
 // ─── Events ───────────────────────────────────────────────────────────────────
@@ -142,6 +144,64 @@ export async function getLeaderboard(eventId: string): Promise<LeaderboardEntry[
     pool_rank: row.pool_rank,
     percentile: row.percentile,
     judge_score_count: 0,
+  }))
+}
+
+// ─── Pairwise ─────────────────────────────────────────────────────────────────
+
+export async function getJudgeForEvent(eventId: string): Promise<Judge | null> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data, error } = await supabase
+    .from('judges')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('user_id', user.id)
+    .single()
+  if (error) return null
+  return data as Judge
+}
+
+export async function getPairwiseComparisons(eventId: string): Promise<PairwiseComparison[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('pairwise_comparisons')
+    .select('*')
+    .eq('event_id', eventId)
+  if (error) throw error
+  return (data ?? []) as PairwiseComparison[]
+}
+
+export async function getPairwiseRankings(eventId: string): Promise<LeaderboardEntry[]> {
+  const [submissions, comparisons] = await Promise.all([
+    getSubmissions(eventId),
+    getPairwiseComparisons(eventId),
+  ])
+
+  const ready = submissions.filter(s => s.status === 'ready')
+  if (ready.length === 0 || comparisons.length === 0) return []
+
+  const rankings = computeRankings(
+    ready.map(s => s.id),
+    comparisons.map(c => ({
+      winnerId: c.winner_id,
+      loserId: c.winner_id === c.submission_a_id ? c.submission_b_id : c.submission_a_id,
+    }))
+  )
+
+  const subMap = new Map(ready.map(s => [s.id, s]))
+  const n = rankings.length
+
+  return rankings.map(r => ({
+    submission_id: r.id,
+    team_name: subMap.get(r.id)?.team_name ?? 'Unknown',
+    overall_score: r.score,
+    pool_rank: r.rank,
+    percentile: Math.round(((n - r.rank) / Math.max(n - 1, 1)) * 100),
+    judge_score_count: comparisons.filter(
+      c => c.submission_a_id === r.id || c.submission_b_id === r.id
+    ).length,
   }))
 }
 
