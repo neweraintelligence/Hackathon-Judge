@@ -16,25 +16,25 @@ export default async function EventsPage() {
       <TopNav
         actions={
           <Link href="/events/new" className="btn-primary" style={{ fontSize: 12 }}>
-            + New Event
+            + Create Competition
           </Link>
         }
       />
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '44px 24px' }}>
         <div className="anim-fade-up">
           <div style={{ marginBottom: 32 }}>
-            <div className="label" style={{ marginBottom: 8 }}>All Events</div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)' }}>Events</h1>
+            <div className="label" style={{ marginBottom: 8 }}>Hackathon Module</div>
+            <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)' }}>Competitions</h1>
           </div>
 
           {events.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '64px 24px' }}>
               <div className="label" style={{ marginBottom: 8, display: 'block', textAlign: 'center' }}>No Events</div>
               <div style={{ color: 'var(--muted2)', marginBottom: 16, fontSize: 14 }}>
-                Create your first judging session to get started.
+                Create your first hackathon competition to get started.
               </div>
               <Link href="/events/new" className="btn-primary">
-                Create your first event
+                Create your first competition
               </Link>
             </div>
           ) : (

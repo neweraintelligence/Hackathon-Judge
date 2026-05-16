@@ -37,7 +37,7 @@ export const DEFAULT_CRITERIA: CriterionConfig[] = [
   {
     key: 'problem_solution_fit',
     label: 'Problem-Solution Fit',
-    weight: 0.15,
+    weight: 0.20,
     description: 'Is this solving a real problem convincingly?',
     subQuestions: [
       'Is there a real, tangible need being addressed?',
@@ -48,8 +48,8 @@ export const DEFAULT_CRITERIA: CriterionConfig[] = [
   {
     key: 'ux_design',
     label: 'UX & Design',
-    weight: 0.10,
-    description: 'Visual polish and usability',
+    weight: 0.05,
+    description: 'Visual polish and usability (assessed from up to 5 screenshots)',
     subQuestions: [
       'Is there clear visual hierarchy and consistent design?',
       'Could a new user navigate it without guidance?',

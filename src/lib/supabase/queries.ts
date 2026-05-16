@@ -124,27 +124,57 @@ export async function getAnalysesForSubmission(
 
 export async function getLeaderboard(eventId: string): Promise<LeaderboardEntry[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('pool_scores')
-    .select(`
-      submission_id,
-      overall_score,
-      pool_rank,
-      percentile,
-      submissions!inner(team_name, event_id)
-    `)
-    .eq('submissions.event_id', eventId)
-    .order('pool_rank', { ascending: true })
-  if (error) throw error
+  const [poolRes, judgeRes] = await Promise.all([
+    supabase
+      .from('pool_scores')
+      .select(`
+        submission_id,
+        overall_score,
+        pool_rank,
+        percentile,
+        submissions!inner(team_name, github_url, event_id, status, is_finalist, finalist_rank)
+      `)
+      .eq('submissions.event_id', eventId)
+      .order('pool_rank', { ascending: true }),
+    supabase
+      .from('judge_scores')
+      .select(`
+        submission_id,
+        score,
+        judges!inner(is_ai_judge),
+        submissions!inner(event_id)
+      `)
+      .eq('submissions.event_id', eventId)
+      .eq('judges.is_ai_judge', false),
+  ])
 
-  return (data ?? []).map((row: any) => ({
-    submission_id: row.submission_id,
-    team_name: row.submissions.team_name,
-    overall_score: row.overall_score,
-    pool_rank: row.pool_rank,
-    percentile: row.percentile,
-    judge_score_count: 0,
-  }))
+  if (poolRes.error) throw poolRes.error
+  if (judgeRes.error) throw judgeRes.error
+
+  const humanScores = new Map<string, { total: number; count: number }>()
+  for (const row of judgeRes.data ?? []) {
+    const current = humanScores.get((row as any).submission_id) ?? { total: 0, count: 0 }
+    current.total += Number((row as any).score)
+    current.count += 1
+    humanScores.set((row as any).submission_id, current)
+  }
+
+  return (poolRes.data ?? []).map((row: any) => {
+    const human = humanScores.get(row.submission_id)
+    return {
+      submission_id: row.submission_id,
+      team_name: row.submissions.team_name,
+      github_url: row.submissions.github_url,
+      status: row.submissions.status,
+      overall_score: Number(row.overall_score),
+      pool_rank: row.pool_rank,
+      percentile: row.percentile,
+      is_finalist: row.submissions.is_finalist,
+      finalist_rank: row.submissions.finalist_rank,
+      human_score: human ? human.total / human.count : null,
+      judge_score_count: human?.count ?? 0,
+    }
+  })
 }
 
 // ─── Pairwise ─────────────────────────────────────────────────────────────────
@@ -196,9 +226,14 @@ export async function getPairwiseRankings(eventId: string): Promise<LeaderboardE
   return rankings.map(r => ({
     submission_id: r.id,
     team_name: subMap.get(r.id)?.team_name ?? 'Unknown',
+    github_url: subMap.get(r.id)?.github_url ?? '',
+    status: subMap.get(r.id)?.status ?? 'ready',
     overall_score: r.score,
     pool_rank: r.rank,
     percentile: Math.round(((n - r.rank) / Math.max(n - 1, 1)) * 100),
+    is_finalist: subMap.get(r.id)?.is_finalist ?? false,
+    finalist_rank: subMap.get(r.id)?.finalist_rank ?? null,
+    human_score: null,
     judge_score_count: comparisons.filter(
       c => c.submission_a_id === r.id || c.submission_b_id === r.id
     ).length,

@@ -3,12 +3,10 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Submission, Judge, LeaderboardEntry } from '@/types'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { AddSubmissionModal } from '@/app/_clients/submissions/AddSubmissionModal'
 import { InviteJudgeModal } from './InviteJudgeModal'
 import { AIJudgeToggle } from './AIJudgeToggle'
-import { deleteSubmission, clearAllSubmissions } from '@/lib/actions/submissions'
+import { deleteSubmission, clearAllSubmissions, saveFinalists } from '@/lib/actions/submissions'
 import { TopNav } from '@/components/ui/TopNav'
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
@@ -25,12 +23,17 @@ interface Props {
   leaderboard: LeaderboardEntry[]
 }
 
+type DashboardTab = 'submissions' | 'judges' | 'leaderboard' | 'finalists'
+const FINALIST_LIMIT = 8
+
 export function EventDashboardClient({ event, submissions, judges, leaderboard }: Props) {
   const router = useRouter()
-  const [tab, setTab] = useState<'submissions' | 'judges' | 'leaderboard'>('submissions')
+  const [tab, setTab] = useState<DashboardTab>('submissions')
   const [showAddSubmission, setShowAddSubmission] = useState(false)
   const [showInviteJudge, setShowInviteJudge] = useState(false)
   const [confirmClearAll, setConfirmClearAll] = useState(false)
+  const [selectedFinalistIds, setSelectedFinalistIds] = useState<string[]>(() => getSavedFinalistIds(submissions))
+  const [finalistMessage, setFinalistMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const hasAnalyzing = submissions.some((s) => s.status === 'analyzing' || s.status === 'pending')
@@ -40,11 +43,23 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
     return () => clearInterval(id)
   }, [hasAnalyzing, router])
 
+  useEffect(() => {
+    setSelectedFinalistIds(getSavedFinalistIds(submissions))
+    setFinalistMessage(null)
+  }, [submissions])
+
   const readyCount = submissions.filter((s) => s.status === 'ready').length
+  const finalistCount = submissions.filter((s) => s.is_finalist).length
   const humanJudges = judges.filter((j) => !j.is_ai_judge)
-  const avgScore = leaderboard.length > 0
-    ? (leaderboard.reduce((s, e) => s + e.overall_score, 0) / leaderboard.length).toFixed(1)
-    : '–'
+  const leaderboardBySubmission = new Map(leaderboard.map((entry) => [entry.submission_id, entry]))
+  const finalistCandidates = [...submissions].sort((a, b) => {
+    const aRank = leaderboardBySubmission.get(a.id)?.pool_rank ?? Number.MAX_SAFE_INTEGER
+    const bRank = leaderboardBySubmission.get(b.id)?.pool_rank ?? Number.MAX_SAFE_INTEGER
+    return aRank - bRank || a.team_name.localeCompare(b.team_name)
+  })
+  const duplicateTeamNames = findDuplicates(submissions.map((s) => s.team_name.trim().toLowerCase()).filter(Boolean))
+  const duplicateRepos = findDuplicates(submissions.map((s) => normalizeGithubUrl(s.github_url)).filter(Boolean))
+  const hasMappingIssues = duplicateTeamNames.length > 0 || duplicateRepos.length > 0
 
   const eventDate = new Date(event.date + 'T00:00:00Z').toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
@@ -54,6 +69,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
     { key: 'submissions', label: `Submissions (${submissions.length})` },
     { key: 'judges',      label: `Judges (${judges.length})` },
     { key: 'leaderboard', label: 'Leaderboard' },
+    { key: 'finalists',   label: `Finalists (${selectedFinalistIds.length}/${FINALIST_LIMIT})` },
   ]
 
   return (
@@ -61,8 +77,8 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
       <TopNav
         actions={
           <>
-            <Link href="/events" className="btn-ghost" style={{ fontSize: 12 }}>Events</Link>
-            <Link href="/events/new" className="btn-ghost" style={{ fontSize: 12 }}>+ New Event</Link>
+            <Link href="/events" className="btn-ghost" style={{ fontSize: 12 }}>Competitions</Link>
+            <Link href="/events/new" className="btn-ghost" style={{ fontSize: 12 }}>+ Create Competition</Link>
           </>
         }
       />
@@ -74,7 +90,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
             <div>
               <div className="label" style={{ marginBottom: 8 }}>
-                <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>← Events</Link>
+                <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>← Competitions</Link>
               </div>
               <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.025em', marginBottom: 5, color: 'var(--text)' }}>
                 {event.name}
@@ -85,10 +101,13 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
             </div>
             <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
               <Link href={`/events/${event.slug}/leaderboard`} className="btn-secondary" style={{ fontSize: 12 }}>
-                Live Leaderboard
+                Attendee Leaderboard
+              </Link>
+              <Link href={`/events/${event.slug}/judge`} className="btn-secondary" style={{ fontSize: 12 }}>
+                Judge Finalists
               </Link>
               <a href={`/api/export/${event.slug}`} download className="btn-secondary" style={{ fontSize: 12 }}>
-                Export CSV
+                Export HJ Results
               </a>
             </div>
           </div>
@@ -99,7 +118,7 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
               { label: 'Submissions', value: submissions.length, color: 'var(--accent2)' },
               { label: 'Ready',       value: readyCount,          color: 'var(--green)' },
               { label: 'Judges',      value: judges.length,       color: 'var(--purple2)' },
-              { label: 'Avg Score',   value: avgScore,            color: 'var(--yellow)' },
+              { label: 'Finalists',   value: finalistCount,       color: 'var(--yellow)' },
             ].map((s) => (
               <div key={s.label} className="card" style={{ padding: '14px 18px' }}>
                 <div className="label" style={{ marginBottom: 6 }}>{s.label}</div>
@@ -271,12 +290,13 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {leaderboard.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--muted)' }}>
-                  No scores yet — analysis and judging must complete first
+                  No scores yet - first-round Hackathon Judge analysis must complete first
                 </div>
               ) : (
                 leaderboard.map((entry, i) => {
                   const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n'
-                  const scoreColor = entry.overall_score >= 9 ? 'var(--green)' : entry.overall_score >= 8 ? 'var(--purple2)' : 'var(--yellow)'
+                  const displayScore = entry.human_score ?? entry.overall_score
+                  const scoreColor = displayScore >= 9 ? 'var(--green)' : displayScore >= 8 ? 'var(--purple2)' : 'var(--yellow)'
                   return (
                     <div
                       key={entry.submission_id}
@@ -287,18 +307,171 @@ export function EventDashboardClient({ event, submissions, judges, leaderboard }
                         {entry.pool_rank}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3, color: 'var(--text)' }}>
-                          {entry.team_name}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
+                            {entry.team_name}
+                          </div>
+                          {entry.is_finalist && <span className="badge badge-purple">Finalist</span>}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                          {entry.percentile}th percentile
+                          First round: {entry.percentile}th percentile
+                          {entry.human_score !== null && ` · Human final: ${entry.judge_score_count} score${entry.judge_score_count === 1 ? '' : 's'}`}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: scoreColor }}>
-                          {entry.overall_score.toFixed(1)}
+                          {displayScore.toFixed(1)}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>/10</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                          {entry.human_score === null ? 'HJ /10' : 'Final /10'}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+
+          {/* Finalists Tab */}
+          {tab === 'finalists' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="card" style={{ background: 'rgba(124,92,252,0.055)', border: '1px solid rgba(124,92,252,0.17)' }}>
+                <div className="label" style={{ color: 'var(--purple2)', marginBottom: 12 }}>Standard Hackathon Competition Flow</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+                  {[
+                    { n: '1', title: 'Portal Upload', body: 'Teams upload the exact team name and project GitHub repo.' },
+                    { n: '2', title: 'HJ First Round', body: 'Hackathon Judge analyzes repos, scores criteria, and returns rationale.' },
+                    { n: '3', title: 'Leaderboard', body: 'Attendees can see ranked results and open project reports.' },
+                    { n: '4', title: 'Top 8 Finals', body: 'Finalists move to the human judging queue for scorecards.' },
+                  ].map((step) => (
+                    <div key={step.n} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.035)', border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--purple2)', fontWeight: 700, marginBottom: 6 }}>Step {step.n}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{step.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5 }}>{step.body}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <div>
+                  <div className="label" style={{ marginBottom: 6 }}>Team / Repository Mapping</div>
+                  <div style={{ fontSize: 13, color: hasMappingIssues ? 'var(--yellow)' : 'var(--green)' }}>
+                    {hasMappingIssues
+                      ? 'Resolve duplicate team names or GitHub repos before exporting/importing results.'
+                      : 'All submitted team names and GitHub repos are unique for this hackathon.'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 5 }}>
+                    The GitHub repo is the canonical project key; the team name should match hackathon registration.
+                  </div>
+                </div>
+                <span className={hasMappingIssues ? 'badge badge-yellow' : 'badge badge-green'}>
+                  {hasMappingIssues ? 'Needs Review' : 'Ready'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                  Select up to {FINALIST_LIMIT} finalists for human judging. Current selection: {selectedFinalistIds.length}.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    className="btn-secondary"
+                    style={{ fontSize: 12 }}
+                    onClick={() => {
+                      setFinalistMessage(null)
+                      setSelectedFinalistIds(leaderboard.slice(0, FINALIST_LIMIT).map((entry) => entry.submission_id))
+                    }}
+                    disabled={leaderboard.length === 0 || isPending}
+                  >
+                    Auto-select top 8
+                  </button>
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: 12 }}
+                    onClick={() => {
+                      setFinalistMessage(null)
+                      setSelectedFinalistIds([])
+                    }}
+                    disabled={isPending}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    className="btn-primary"
+                    style={{ fontSize: 12 }}
+                    disabled={isPending}
+                    onClick={() => startTransition(async () => {
+                      setFinalistMessage(null)
+                      const res = await saveFinalists(event.id, selectedFinalistIds)
+                      if (res.error) {
+                        setFinalistMessage(res.error)
+                      } else {
+                        setFinalistMessage(`Saved ${selectedFinalistIds.length} finalist${selectedFinalistIds.length === 1 ? '' : 's'}.`)
+                        router.refresh()
+                      }
+                    })}
+                  >
+                    {isPending ? 'Saving...' : 'Save Finalists'}
+                  </button>
+                </div>
+              </div>
+
+              {finalistMessage && (
+                <div style={{ fontSize: 12, color: finalistMessage.startsWith('Saved') ? 'var(--green)' : 'var(--red)' }}>
+                  {finalistMessage}
+                </div>
+              )}
+
+              {finalistCandidates.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--muted)' }}>
+                  No submissions yet. Add team project repos before selecting finalists.
+                </div>
+              ) : (
+                finalistCandidates.map((submission, i) => {
+                  const entry = leaderboardBySubmission.get(submission.id)
+                  const selectedIndex = selectedFinalistIds.indexOf(submission.id)
+                  const isSelected = selectedIndex !== -1
+                  const repo = parseGithubUrl(submission.github_url)
+                  return (
+                    <div
+                      key={submission.id}
+                      className="card"
+                      style={{ display: 'flex', alignItems: 'center', gap: 14, animation: `fadeUp 0.32s ${i * 0.045}s cubic-bezier(0.16,1,0.3,1) both` }}
+                    >
+                      <button
+                        onClick={() => {
+                          setFinalistMessage(null)
+                          setSelectedFinalistIds((prev) => {
+                            if (prev.includes(submission.id)) return prev.filter((id) => id !== submission.id)
+                            if (prev.length >= FINALIST_LIMIT) return prev
+                            return [...prev, submission.id]
+                          })
+                        }}
+                        disabled={!isSelected && selectedFinalistIds.length >= FINALIST_LIMIT}
+                        className={isSelected ? 'btn-primary' : 'btn-secondary'}
+                        style={{ fontSize: 12, width: 92, justifyContent: 'center', opacity: !isSelected && selectedFinalistIds.length >= FINALIST_LIMIT ? 0.45 : 1 }}
+                      >
+                        {isSelected ? `Final ${selectedIndex + 1}` : 'Select'}
+                      </button>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{submission.team_name}</div>
+                          {entry && <span className="badge badge-default">Rank {entry.pool_rank}</span>}
+                          <span className={STATUS_MAP[submission.status]?.cls ?? STATUS_MAP.pending.cls}>
+                            {STATUS_MAP[submission.status]?.label ?? 'Pending'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--muted2)' }}>
+                          {repo ? `@${repo.owner} / ${repo.repo}` : submission.github_url}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', minWidth: 70 }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: entry ? 'var(--accent2)' : 'var(--muted)' }}>
+                          {entry ? entry.overall_score.toFixed(1) : '-'}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>HJ score</div>
                       </div>
                     </div>
                   )
@@ -327,6 +500,28 @@ function parseGithubUrl(url: string): { owner: string; repo: string } | null {
     if (parts.length >= 2) return { owner: parts[0], repo: parts[1] }
   } catch {}
   return null
+}
+
+function normalizeGithubUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return parsed.pathname.replace(/\.git$/, '').replace(/\/$/, '').toLowerCase()
+  } catch {
+    return url.trim().replace(/\.git$/, '').replace(/\/$/, '').toLowerCase()
+  }
+}
+
+function findDuplicates(values: string[]): string[] {
+  const counts = new Map<string, number>()
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1)
+  return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([value]) => value)
+}
+
+function getSavedFinalistIds(submissions: Submission[]): string[] {
+  return submissions
+    .filter((submission) => submission.is_finalist)
+    .sort((a, b) => (a.finalist_rank ?? Number.MAX_SAFE_INTEGER) - (b.finalist_rank ?? Number.MAX_SAFE_INTEGER))
+    .map((submission) => submission.id)
 }
 
 function AnalyzingSpinner() {

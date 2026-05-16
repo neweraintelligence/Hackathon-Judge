@@ -1,5 +1,5 @@
 export function buildPass4Prompt(screenshotCount: number): string {
-  return `You are a UX and visual design expert reviewing a hackathon project. You have been provided with ${screenshotCount} screenshot(s) of the interface.
+  return `You are a UX and visual design expert reviewing a hackathon project. You have been provided with ${screenshotCount} screenshot(s) of the interface (maximum 5 accepted; this criterion counts for 5% of the overall score).
 
 ## What to evaluate (hackathon context — built in 24 hours):
 

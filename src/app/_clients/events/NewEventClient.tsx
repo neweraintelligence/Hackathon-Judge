@@ -12,7 +12,6 @@ export function NewEventClient() {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [criteria, setCriteria] = useState<CriterionConfig[]>(DEFAULT_CRITERIA)
-  const [mode, setMode] = useState('rubric')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -36,7 +35,7 @@ export function NewEventClient() {
       <TopNav
         actions={
           <Link href="/events" className="btn-ghost" style={{ fontSize: 12 }}>
-            Events
+            Competitions
           </Link>
         }
       />
@@ -44,22 +43,21 @@ export function NewEventClient() {
       <div style={{ maxWidth: 540, margin: '0 auto', padding: '44px 24px' }}>
         <div className="anim-fade-up">
           <div className="label" style={{ marginBottom: 10 }}>
-            <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>← Events</Link>
+            <Link href="/events" style={{ color: 'inherit', textDecoration: 'none' }}>← Competitions</Link>
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6, color: 'var(--text)' }}>
-            New Event
+            New Hackathon Competition
           </h1>
           <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 30 }}>
-            Set up a new hackathon judging session.
+            Set up the standard HJ first round, attendee leaderboard, and top-8 human final.
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Basic fields */}
             <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {[
-                { label: 'Event Name', name: 'name', placeholder: 'e.g. SF AI Hackathon 2026', type: 'text' },
-                { label: 'Date',       name: 'date', placeholder: '',                           type: 'date' },
-                { label: 'Slug',       name: 'slug', placeholder: 'sf-ai-2026',                 type: 'text' },
+                { label: 'Competition Name', name: 'name', placeholder: 'e.g. Cursor Calgary Hackathon 2026', type: 'text' },
+                { label: 'Hackathon Date',   name: 'date', placeholder: '',                                      type: 'date' },
               ].map((f) => (
                 <div key={f.name}>
                   <div className="label" style={{ marginBottom: 7 }}>{f.label}</div>
@@ -73,39 +71,16 @@ export function NewEventClient() {
                 </div>
               ))}
 
-              {/* Judging Mode */}
-              <div>
-                <div className="label" style={{ marginBottom: 9 }}>Judging Mode</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {[
-                    { key: 'rubric',   label: 'Rubric',   sub: 'Score each criterion 1–10' },
-                    { key: 'pairwise', label: 'Pairwise', sub: 'Rank submissions head-to-head' },
-                  ].map((m) => (
-                    <button
-                      key={m.key}
-                      type="button"
-                      onClick={() => setMode(m.key)}
-                      className="card"
-                      style={{
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontFamily: 'inherit',
-                        color: 'inherit',
-                        border: `1px solid ${mode === m.key ? 'rgba(61,106,243,0.4)' : 'var(--border)'}`,
-                        background: mode === m.key ? 'rgba(61,106,243,0.07)' : 'var(--surface)',
-                        transition: 'all 0.18s',
-                        padding: '12px 16px',
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, color: mode === m.key ? 'var(--accent2)' : 'var(--text)' }}>
-                        {m.label}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.sub}</div>
-                    </button>
-                  ))}
+              <div style={{ padding: 14, borderRadius: 12, border: '1px solid rgba(124,92,252,0.2)', background: 'rgba(124,92,252,0.055)' }}>
+                <div className="label" style={{ color: 'var(--purple2)', marginBottom: 8 }}>Hackathon Mode</div>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, marginBottom: 5 }}>
+                  HJ first round plus top-8 human finals
                 </div>
-                {/* Hidden input for judging_mode */}
-                <input type="hidden" name="judging_mode" value={mode} />
+                <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+                  Teams upload project repos to the portal, Hackathon Judge returns scores and rationale,
+                  attendees see the leaderboard, and the selected finalists move into human judge scorecards.
+                </div>
+                <input type="hidden" name="judging_mode" value="hackathon" />
               </div>
             </div>
 
@@ -156,7 +131,7 @@ export function NewEventClient() {
                 disabled={isPending}
                 style={{ flex: 1, justifyContent: 'center', padding: '11px 0', fontSize: 14, opacity: isPending ? 0.7 : 1 }}
               >
-                {isPending ? 'Creating…' : 'Create Event →'}
+                {isPending ? 'Creating…' : 'Create Competition →'}
               </button>
               <Link href="/events" className="btn-secondary">
                 Cancel

@@ -1,6 +1,6 @@
 // ─── Events ───────────────────────────────────────────────────────────────────
 
-export type JudgingMode = 'rubric' | 'pairwise' | 'hybrid'
+export type JudgingMode = 'rubric' | 'pairwise' | 'hybrid' | 'hackathon'
 
 export interface CriterionConfig {
   key: string
@@ -34,6 +34,9 @@ export interface Submission {
   team_name: string
   pitch_text: string | null
   status: SubmissionStatus
+  is_finalist: boolean
+  finalist_rank: number | null
+  finalist_selected_at: string | null
   created_at: string
 }
 
@@ -216,8 +219,13 @@ export interface SubmissionWithAnalysis extends Submission {
 export interface LeaderboardEntry {
   submission_id: string
   team_name: string
+  github_url: string
+  status: SubmissionStatus
   overall_score: number
   pool_rank: number
   percentile: number
+  is_finalist: boolean
+  finalist_rank: number | null
+  human_score: number | null
   judge_score_count: number
 }

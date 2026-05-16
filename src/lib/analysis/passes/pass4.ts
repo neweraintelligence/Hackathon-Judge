@@ -21,7 +21,7 @@ export async function runPass4(screenshotUrls: string[]): Promise<Pass4Result> {
 
   // Build image content blocks
   const imageBlocks: Anthropic.ImageBlockParam[] = await Promise.all(
-    screenshotUrls.slice(0, 8).map(async (url) => {
+    screenshotUrls.slice(0, 5).map(async (url) => {
       // Fetch image and convert to base64
       const res = await fetch(url)
       const arrayBuffer = await res.arrayBuffer()

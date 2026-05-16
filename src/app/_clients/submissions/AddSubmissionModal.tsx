@@ -124,18 +124,18 @@ export function AddSubmissionModal({ eventId, onClose }: Props) {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="card w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between sticky top-0 bg-[#13131a] pb-2">
-          <h2 className="font-semibold text-white">Add Submission</h2>
+          <h2 className="font-semibold text-white">Add Team Project</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1">
-            <label className="label">Team Name *</label>
-            <input name="team_name" className="input" placeholder="Team Awesome" required />
+            <label className="label">Hackathon Team Name *</label>
+            <input name="team_name" className="input" placeholder="Must match registration team name" required />
           </div>
 
           <div className="space-y-1">
-            <label className="label">GitHub URL *</label>
+            <label className="label">Project GitHub Repo *</label>
             <input
               name="github_url"
               className="input"
@@ -231,7 +231,7 @@ export function AddSubmissionModal({ eventId, onClose }: Props) {
               onChange={(e) => setAutoAnalyze(e.target.checked)}
               className="w-4 h-4 rounded accent-[#3b66f5]"
             />
-            <span className="text-sm text-gray-300">Auto-start AI analysis after adding</span>
+            <span className="text-sm text-gray-300">Auto-start Hackathon Judge analysis after adding</span>
           </label>
 
           {uploadStatus && <p className="text-xs text-purple-400">{uploadStatus}</p>}
@@ -239,7 +239,7 @@ export function AddSubmissionModal({ eventId, onClose }: Props) {
 
           <div className="flex gap-2 pt-2">
             <Button type="submit" loading={isPending} className="flex-1">
-              Add Submission
+              Add Project
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           </div>

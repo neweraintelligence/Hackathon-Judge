@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       score,
       comment,
       judges!inner(email, display_name, event_id),
-      submissions!inner(team_name, github_url, event_id)
+      submissions!inner(team_name, github_url, event_id, is_finalist, finalist_rank)
     `)
     .eq('judges.event_id', event.id)
 
@@ -32,12 +32,12 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       score,
       reasoning,
       confidence,
-      submissions!inner(team_name, event_id)
+      submissions!inner(team_name, github_url, event_id, is_finalist, finalist_rank)
     `)
     .eq('submissions.event_id', event.id)
 
   // Build CSV
-  const lines = ['type,team_name,criteria_key,score,judge_email,comment,reasoning,confidence']
+  const lines = ['type,team_name,github_url,is_finalist,finalist_rank,criteria_key,score,judge_email,comment,reasoning,confidence']
 
   for (const row of rows || []) {
     const r = row as any
@@ -45,6 +45,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       [
         'judge',
         `"${r.submissions.team_name}"`,
+        `"${r.submissions.github_url}"`,
+        r.submissions.is_finalist ? 'true' : 'false',
+        r.submissions.finalist_rank ?? '',
         r.criteria_key,
         r.score,
         `"${r.judges.email}"`,
@@ -61,6 +64,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       [
         'ai',
         `"${r.submissions.team_name}"`,
+        `"${r.submissions.github_url}"`,
+        r.submissions.is_finalist ? 'true' : 'false',
+        r.submissions.finalist_rank ?? '',
         r.criteria_key,
         r.score,
         'AI',

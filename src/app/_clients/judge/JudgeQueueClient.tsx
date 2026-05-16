@@ -13,7 +13,9 @@ export function JudgeQueueClient({ event, submissions }: Props) {
     return (
       <div className="card text-center py-16 text-gray-400 fade-up">
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 mb-2">Queue Empty</div>
-        No submissions are ready yet. Refresh in a moment.
+        {event.judging_mode === 'hackathon'
+          ? 'No finalists are ready yet. Select the top 8 finalists from the competition dashboard.'
+          : 'No submissions are ready yet. Refresh in a moment.'}
       </div>
     )
   }
@@ -36,6 +38,9 @@ export function JudgeQueueClient({ event, submissions }: Props) {
             )}
           </div>
           <div className="flex items-center gap-3 shrink-0">
+            {event.judging_mode === 'hackathon' && s.finalist_rank && (
+              <Badge variant="purple">Finalist #{s.finalist_rank}</Badge>
+            )}
             <Badge variant="green">Ready</Badge>
             <span className="text-gray-400 text-sm group-hover:text-gray-200 transition-colors">Open Scorecard</span>
           </div>

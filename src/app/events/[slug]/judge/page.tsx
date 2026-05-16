@@ -10,7 +10,10 @@ export default async function JudgeQueuePage({ params }: { params: { slug: strin
   if (!event) notFound()
 
   const submissions = await getSubmissions(event.id)
-  const readySubmissions = submissions.filter((s) => s.status === 'ready')
+  const readySubmissions = submissions
+    .filter((s) => s.status === 'ready')
+    .filter((s) => event.judging_mode === 'hackathon' ? s.is_finalist : true)
+    .sort((a, b) => (a.finalist_rank ?? Number.MAX_SAFE_INTEGER) - (b.finalist_rank ?? Number.MAX_SAFE_INTEGER))
 
   if (event.judging_mode === 'pairwise') {
     const [judge, comparisons] = await Promise.all([
@@ -47,7 +50,9 @@ export default async function JudgeQueuePage({ params }: { params: { slug: strin
           <div className="label mb-1">Judge Queue</div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{event.name}</h1>
           <p className="text-gray-400 text-sm mt-2">
-            {readySubmissions.length} submission{readySubmissions.length !== 1 ? 's' : ''} ready to judge
+            {event.judging_mode === 'hackathon'
+              ? `${readySubmissions.length} finalist${readySubmissions.length !== 1 ? 's' : ''} ready for human scoring`
+              : `${readySubmissions.length} submission${readySubmissions.length !== 1 ? 's' : ''} ready to judge`}
           </p>
         </div>
         <JudgeQueueClient

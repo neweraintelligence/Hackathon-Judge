@@ -24,13 +24,23 @@ export default async function LeaderboardPage({ params }: { params: { slug: stri
             ← {event.name}
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-white">Leaderboard</h1>
+            <h1 className="text-3xl font-bold text-white">Attendee Leaderboard</h1>
             {event.judging_mode === 'pairwise' && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-medium">
                 Pairwise
               </span>
             )}
+            {event.judging_mode === 'hackathon' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25 font-medium">
+                Hackathon
+              </span>
+            )}
           </div>
+          {event.judging_mode === 'hackathon' && (
+            <p className="text-sm text-gray-500 mt-3">
+              First-round Hackathon Judge results are shown for every analyzed team. The top 8 selected finalists show human final scores once judges submit scorecards.
+            </p>
+          )}
         </div>
         <LeaderboardClient
           eventId={event.id}

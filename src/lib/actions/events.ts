@@ -14,7 +14,7 @@ function slugify(name: string): string {
 export async function createEvent(formData: FormData): Promise<{ slug?: string; error?: string }> {
   const name = formData.get('name') as string
   const date = formData.get('date') as string
-  const judgingMode = (formData.get('judging_mode') as JudgingMode) || 'rubric'
+  const judgingMode = (formData.get('judging_mode') as JudgingMode) || 'hackathon'
   const criteriaJson = formData.get('criteria_config') as string
 
   if (!name || !date) return { error: 'Name and date are required.' }

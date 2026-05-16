@@ -26,13 +26,13 @@ export default function LandingPage() {
         </div>
 
         <p style={{ fontSize: 13, color: 'var(--muted2)', marginBottom: 24, lineHeight: 1.6 }}>
-          Hackathon judging tool. Pick an event or create one.
+          Hackathon competition tool. Teams upload repos, HJ scores the first round, and finalists move to human judging.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { label: 'Events', sub: 'View all judging sessions', href: '/events', delay: '0s' },
-            { label: 'New Event', sub: 'Set up a new hackathon', href: '/events/new', delay: '0.07s' },
+            { label: 'Competitions', sub: 'View hackathon competitions', href: '/events', delay: '0s' },
+            { label: 'Create Competition', sub: 'Set up the standard hackathon flow', href: '/events/new', delay: '0.07s' },
           ].map((item) => (
             <Link
               key={item.label}

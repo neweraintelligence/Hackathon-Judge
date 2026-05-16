@@ -31,31 +31,21 @@ export function LeaderboardClient({ eventId, initialLeaderboard, judgingMode }: 
     }
 
     const channel = supabase
-      .channel(`pool_scores:${eventId}`)
+      .channel(`leaderboard:${eventId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'pool_scores' },
-        () => {
-          supabase
-            .from('pool_scores')
-            .select('submission_id, overall_score, pool_rank, percentile, submissions!inner(team_name, event_id)')
-            .eq('submissions.event_id', eventId)
-            .order('pool_rank', { ascending: true })
-            .then(({ data }) => {
-              if (data) {
-                setEntries(
-                  data.map((row: any) => ({
-                    submission_id: row.submission_id,
-                    team_name: row.submissions.team_name,
-                    overall_score: row.overall_score,
-                    pool_rank: row.pool_rank,
-                    percentile: row.percentile,
-                    judge_score_count: 0,
-                  }))
-                )
-              }
-            })
-        }
+        () => { router.refresh() }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'judge_scores' },
+        () => { router.refresh() }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'submissions' },
+        () => { router.refresh() }
       )
       .subscribe()
 
@@ -72,7 +62,7 @@ export function LeaderboardClient({ eventId, initialLeaderboard, judgingMode }: 
       <div className="card text-center py-16 text-gray-500">
         {judgingMode === 'pairwise'
           ? 'No comparisons yet — judges need to start comparing'
-          : 'No scores yet — waiting for analysis to complete'}
+          : 'No HJ results yet — teams appear after repo analysis completes'}
       </div>
     )
   }
@@ -99,15 +89,24 @@ export function LeaderboardClient({ eventId, initialLeaderboard, judgingMode }: 
           </div>
 
           <div className="flex-1">
-            <div className="font-semibold text-white">{entry.team_name}</div>
+            <div className="flex items-center gap-2">
+              <div className="font-semibold text-white">{entry.team_name}</div>
+              {entry.is_finalist && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                  Finalist{entry.finalist_rank ? ` #${entry.finalist_rank}` : ''}
+                </span>
+              )}
+            </div>
             <div className="text-xs text-gray-500">
               {judgingMode === 'pairwise'
                 ? `${entry.judge_score_count} comparison${entry.judge_score_count !== 1 ? 's' : ''}`
-                : `${entry.percentile}th percentile`}
+                : entry.human_score !== null
+                  ? `Human final score from ${entry.judge_score_count} rubric score${entry.judge_score_count === 1 ? '' : 's'} · HJ first round #${entry.pool_rank}`
+                  : `HJ first round #${entry.pool_rank} · ${entry.percentile}th percentile`}
             </div>
           </div>
 
-          <ProgressRing score={entry.overall_score} size={56} strokeWidth={4} />
+          <ProgressRing score={entry.human_score ?? entry.overall_score} size={56} strokeWidth={4} />
         </div>
       ))}
     </div>

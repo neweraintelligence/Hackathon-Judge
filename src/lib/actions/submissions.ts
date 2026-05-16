@@ -63,3 +63,56 @@ export async function updateSubmissionStatus(
     .update({ status })
     .eq('id', submissionId)
 }
+
+export async function saveFinalists(
+  eventId: string,
+  submissionIds: string[]
+): Promise<{ error?: string }> {
+  if (submissionIds.length > 8) return { error: 'Hackathon finals are capped at 8 teams.' }
+
+  const uniqueIds = Array.from(new Set(submissionIds))
+  if (uniqueIds.length !== submissionIds.length) return { error: 'Finalist selections include duplicates.' }
+
+  const supabase = createServiceClient()
+
+  if (uniqueIds.length > 0) {
+    const { data: rows, error: lookupError } = await supabase
+      .from('submissions')
+      .select('id')
+      .eq('event_id', eventId)
+      .in('id', uniqueIds)
+
+    if (lookupError) return { error: lookupError.message }
+    if ((rows ?? []).length !== uniqueIds.length) {
+      return { error: 'Every finalist must belong to this hackathon.' }
+    }
+  }
+
+  const { error: resetError } = await supabase
+    .from('submissions')
+    .update({
+      is_finalist: false,
+      finalist_rank: null,
+      finalist_selected_at: null,
+    })
+    .eq('event_id', eventId)
+
+  if (resetError) return { error: resetError.message }
+
+  for (const [index, submissionId] of uniqueIds.entries()) {
+    const { error } = await supabase
+      .from('submissions')
+      .update({
+        is_finalist: true,
+        finalist_rank: index + 1,
+        finalist_selected_at: new Date().toISOString(),
+      })
+      .eq('event_id', eventId)
+      .eq('id', submissionId)
+
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath('/events')
+  return {}
+}
